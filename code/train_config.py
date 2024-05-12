@@ -5,8 +5,8 @@ IMAGE_SIZE = 224
 
 # hyperparameter
 EPOCH = 100
-LEARNING_RATE = 0.001
-BATCH_SIZE = 16
+LEARNING_RATE = 0.00001
+BATCH_SIZE = 32
 
 #shuffle True or Flase
 SHUFFLE = True

@@ -147,20 +147,18 @@ start = datetime.now(timezone('Asia/Seoul'))
 print(f"train start : {start}")
 
 if __name__ == '__main__':
-      
     # tensorboard, model saved path
-    file_name = CONST_DIR_PATH.split('/')[-1]
-    TRAIN_LABEL = file_name.strip('tfrecord_')
     CONST_SAVE_DIR = f"{CONST_ROOT_PATH}/result"
-    RESULT_FILE_DIR = os.path.join(os.path.expanduser(CONST_SAVE_DIR), TRAIN_LABEL) # result/1_2_3_4_5_6_7
+    EXPERIMENT_DIR = f"{MODEL_NAME}_{IMAGE_SIZE}_{EPOCH}_{LEARNING_RATE}_{BATCH_SIZE}_{SHUFFLE}"
+    RESULT_FILE_DIR = os.path.join(os.path.expanduser(CONST_SAVE_DIR), EXPERIMENT_DIR)
     
     # tensorboard
-    SAVE_FOLDER_TSBOARD = os.path.join(os.path.expanduser(RESULT_FILE_DIR), "tensorboard") # result/1_2_3_4_5_6_7/tensorboard
+    SAVE_FOLDER_TSBOARD = os.path.join(os.path.expanduser(RESULT_FILE_DIR), "tensorboard")
     if not os.path.exists(SAVE_FOLDER_TSBOARD):
         os.makedirs(SAVE_FOLDER_TSBOARD)
        
     # model checkpoint
-    SAVE_FOLDER_MODEL = os.path.join(os.path.expanduser(RESULT_FILE_DIR), "model") # result/1_2_3_4_5_6_7/model
+    SAVE_FOLDER_MODEL = os.path.join(os.path.expanduser(RESULT_FILE_DIR), "model")
     if not os.path.exists(SAVE_FOLDER_MODEL):
         os.makedirs(SAVE_FOLDER_MODEL)
     CHECKPOINT_FILE = os.path.join(os.path.expanduser(SAVE_FOLDER_MODEL), 'model-{epoch:03d}-{accuracy:03f}-{val_accuracy:03f}.weights.h5')
@@ -174,5 +172,4 @@ if __name__ == '__main__':
                               image_size = IMAGE_SIZE)
      
     history = train_model.train()
-
     train_model.save_accuracy(history)

@@ -1,12 +1,12 @@
 import os
 # model
-MODEL_NAME = 'inception'
+MODEL_NAME = 'InceptionResNet'
 IMAGE_SIZE = 224
 
 # hyperparameter
 EPOCH = 100
-LEARNING_RATE = 0.00001
-BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+BATCH_SIZE = 64
 
 #shuffle True or Flase
 SHUFFLE = True

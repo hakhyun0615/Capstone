@@ -13,7 +13,7 @@ from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D, Rescal
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping, LambdaCallback
 from tensorflow.keras.optimizers import SGD  
 from tensorflow.keras.metrics import Precision, Recall
-from tensorflow.keras.applications import InceptionV3
+from tensorflow.keras.applications import InceptionV3, InceptionResNetV2
 
 '''#GPU 선택 / GPU 하나일 경우 아래 두 코드 주석 처리
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -26,7 +26,7 @@ if len(physical_devices) > 0:
 class Load_model:
     def __init__(self, MODEL_NAME, IMAGE_SIZE):
         self.model_name = MODEL_NAME
-        self.image_size = IMAGE_SIZE
+        self.image_shape = (IMAGE_SIZE, IMAGE_SIZE, 3)
 
     # def DataAugmentation(self):
     #     return Sequential([
@@ -39,17 +39,30 @@ class Load_model:
     #     ])
 
     def build_network(self):
-        if self.model_name == 'inception':
-            Inception = InceptionV3(input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3), include_top=False, weights='imagenet')
+        if self.model_name == 'Inception':
+            Inception = InceptionV3(input_shape=self.image_shape, include_top=False, weights='imagenet')
             Inception.trainable = False
+            inputs = Input(self.image_shape)
+            x = tf.keras.applications.inception_v3.preprocess_input(inputs)
+            # x = self.DataAugmentation()(inputs)
+            x = Inception(x, training=False)
+            x = GlobalAveragePooling2D()(x)
+            # x = Dense(1024, activation='relu')(x)
+            outputs = Dense(7, activation='softmax')(x)
+        elif self.model_name == 'InceptionResNet':
+            InceptionResNet = InceptionResNetV2(input_shape=self.image_shape, include_top=False, weights='imagenet')
+            InceptionResNet.trainable = False
+            inputs = Input(self.image_shape)
+            x = tf.keras.applications.inception_resnet_v2.preprocess_input(inputs)
+            # x = self.DataAugmentation()(inputs)
+            x = InceptionResNet(x, training=False)
+            x = GlobalAveragePooling2D()(x)
+            # x = Dense(1024, activation='relu')(x)
+            outputs = Dense(7, activation='softmax')(x)
+        elif self.model_name == 'Facenet':
+            pass
         else:
             raise ValueError(f"unsupported model name: {self.model_name}")
-                  
-        inputs = Input((self.image_size, self.image_size, 3))
-        # x = self.DataAugmentation()(inputs)
-        x = Inception(inputs, training=False)
-        x = GlobalAveragePooling2D()(x)
-        outputs = Dense(7, activation='softmax')(x)
 
         model = Model(inputs=inputs, outputs=outputs)
         model.summary()

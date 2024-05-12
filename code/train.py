@@ -4,13 +4,14 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import sys
 from train_config import *
-from code.postprocess.tfrecord_convert import tfrecord
+from tfrecord2image import tfrecord
 from pytz import timezone
 from datetime import datetime
-from tensorflow.keras import Sequential 
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input,Dense
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
-from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
+from tensorflow.keras.optimizers import Adam  
+from tensorflow.keras.applications import ResNet50
 
 '''#GPU 선택 / GPU 하나일 경우 아래 두 코드 주석 처리
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
@@ -22,36 +23,30 @@ if len(physical_devices) > 0:
 
 class Load_model:
     def __init__(self, MODEL_NAME):
-        self.num_class = CLASS_COUNT
         self.model_name = MODEL_NAME
 
-    def InceptionResnet(self):
-        network = InceptionResNetV2(
-            include_top=False, 
-            weights='imagenet', 
-            input_tensor=None, 
-            input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3),
-            pooling='avg')
-        
-        return network
-
     def build_network(self):
-        if self.model_name == 'inception_v4':
-            network = InceptionResnet()
+        if self.model_name == 'resnet':
+            inputs = Input((IMAGE_SIZE, IMAGE_SIZE, 3))
+            ResNet = ResNet50(weights='imagenet')
+        else:
+            inputs = Input((IMAGE_SIZE, IMAGE_SIZE, 3))
+                  
+        x = ResNet(inputs)
+        print(x.shape)
+        x = Dense(2048, activation='relu')(x)
+        outputs = Dense(7, activation='softmax')(x)
 
-        model = Sequential()
-        model.add(network)
-        model.add(Dense(2048, activation='relu'))
-        model.add(Dense(self.num_class, activation = ACTIVATION))
+        model = Model(inputs=inputs, outputs=outputs)
         model.summary()
 
         return model
 
-class Fine_tunning:
+class Train_model:
     def __init__(self, train_path, val_path, model_name):
         with tf.device('/cpu:0'):
-            train_dataset = tfrecord(train_path, TRAIN_TYPES, IMAGE_SIZE)
-            val_dataset = tfrecord(val_path, TRAIN_TYPES, IMAGE_SIZE)
+            train_dataset = tfrecord(train_path, IMAGE_SIZE)
+            val_dataset = tfrecord(val_path, IMAGE_SIZE)
 
             if SHUFFLE == True :
                 train_dataset = train_dataset.shuffle(buffer_size = 100000) \
@@ -71,25 +66,22 @@ class Fine_tunning:
         self.model_name = model_name
         self.train_path = train_path
 
-    def training(self):
-        optimizer = tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE, decay=1e-5, momentum=0.999, nesterov=True)
-
+    def train(self):
         model = self.load_model.build_network()
-   
-        check_point = ModelCheckpoint(CHECKPOINT_FILE, verbose=1,
-                                    monitor='val_loss', save_best_only=True, mode='min', save_weights_only=True)
-        tbd_callback = TensorBoard(log_dir = SAVE_FOLDER_TSBOARD, histogram_freq = 1)
-
-        model.compile(loss= LOSS,
+        optimizer = Adam(learning_rate=LEARNING_RATE)
+        model.compile(loss= 'categorical_crossentropy',
                       optimizer=optimizer,
                       metrics=['acc', tf.keras.metrics.Precision(name = 'precision'), tf.keras.metrics.Recall(name = 'recall')])
         
+        check_point = ModelCheckpoint(CHECKPOINT_FILE, verbose=1, monitor='val_loss', save_best_only=True, mode='min', save_weights_only=True)
+        tbd_callback = TensorBoard(log_dir = SAVE_FOLDER_TSBOARD, histogram_freq = 1)
+
         history = model.fit(
             self.train_data,
             epochs = self.epoch,
             validation_data = self.val_data,
             callbacks = [check_point, tbd_callback]
-            )
+        )
 
         print("Train_Accuracy : ", history.history['acc'][-1])
         print("Train_Precision : ", history.history['precision'][-1])
@@ -99,8 +91,8 @@ class Fine_tunning:
         print("Val_Precision : ", history.history['val_precision'][-1])
         print("Val_Recall : ", history.history['val_recall'][-1])
 
-        today1 = datetime.now(timezone('Asia/Seoul'))
-        print(f"classification end : {today1}")
+        end = datetime.now(timezone('Asia/Seoul'))
+        print(f"train end : {end}")
         
         return history
 
@@ -139,16 +131,14 @@ class Fine_tunning:
         plt.savefig(save_path)
         plt.cla()
         
-today = datetime.now(timezone('Asia/Seoul'))
-print(f"classification start : {today}")
+start = datetime.now(timezone('Asia/Seoul'))
+print(f"train start : {start}")
 
 if __name__ == '__main__':
     # tensorboard, model_saved path
     file_name = CONST_DIR_PATH.split('/')[-1]
     TRAIN_LABEL = file_name.strip('tfrecord_')
-
-    MODEL_SAVE_DIR = TRAIN_TYPES + "_" + TRAIN_LABEL
-    RESULT_FILE_DIR = os.path.join(os.path.expanduser(CONST_SAVE_DIR), MODEL_SAVE_DIR)
+    RESULT_FILE_DIR = os.path.join(os.path.expanduser(CONST_SAVE_DIR), TRAIN_LABEL)
 
     # tensorboard
     SAVE_FOLDER_TSBOARD = os.path.join(os.path.expanduser(RESULT_FILE_DIR), "tensorboard")
@@ -159,7 +149,8 @@ if __name__ == '__main__':
     SAVE_FOLDER_MODEL = os.path.join(os.path.expanduser(RESULT_FILE_DIR), "model")
     if not os.path.exists(SAVE_FOLDER_MODEL):
         os.makedirs(SAVE_FOLDER_MODEL)
-    CHECKPOINT_FILE = os.path.join(os.path.expanduser(SAVE_FOLDER_MODEL), 'model-{epoch:03d}-{acc:03f}-{val_acc:03f}')
+    CHECKPOINT_FILE = os.path.join(os.path.expanduser(SAVE_FOLDER_MODEL), 'model-{epoch:03d}-{acc:03f}-{val_acc:03f}.weights.h5')
+
 
     # console log
     LOG_DIR = os.path.join(os.path.expanduser(RESULT_FILE_DIR), 'log.txt')
@@ -167,8 +158,9 @@ if __name__ == '__main__':
     #console log save
     sys.stdout = open(LOG_DIR, 'a', encoding='UTF-8')
 
-    fine_tunning = Fine_tunning(train_path = CONST_TRAIN_PATH,
-                                val_path = CONST_VAL_PATH,
-                                model_name = MODEL_NAME)
-    history = fine_tunning.training()
-    fine_tunning.save_accuracy(history)
+    train_model = Train_model(train_path = CONST_TRAIN_PATH,
+                              val_path = CONST_VAL_PATH,
+                              model_name = MODEL_NAME)
+    
+    history = train_model.train()
+    train_model.save_accuracy(history)

@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import math
 from IPython.display import clear_output
-from code.preprocess.print_log import *
+from preprocess.print_log import *
 
 # 이미지 및 TFRecord 상위 경로
 CONST_ROOT_PATH = os.path.expanduser('~/Desktop/Git/capstone/Capstone')

@@ -6,8 +6,8 @@ import seaborn as sns
 
 from pytz import timezone
 from datetime import datetime
-from code.test_config import *
-from code.postprocess.tfrecord_convert import tfrecord
+from test_config import *
+from tfrecord_convert import tfrecord
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from sklearn.metrics import confusion_matrix, classification_report

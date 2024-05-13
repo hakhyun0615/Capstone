@@ -8,7 +8,7 @@ IMAGE_SIZE = 299
 
 # hyperparameter
 EPOCHS = 500
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.001
 BATCH_SIZE = 64
 
 # root path

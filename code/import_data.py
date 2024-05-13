@@ -1,8 +1,10 @@
 from train_config import *
+from PIL import ImageFile
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 class Import_data:
     def __init__(self, train_data_path, val_data_path, image_size, batch_size):
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
         self.train_data_path = train_data_path
         self.val_data_path = val_data_path
         self.image_size = image_size

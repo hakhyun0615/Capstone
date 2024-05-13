@@ -1,18 +1,32 @@
 import os
+# data
+DATA = 'original_data'
+
 # model
 MODEL_NAME = 'InceptionResNet'
-IMAGE_SIZE = 224
+IMAGE_SIZE = 299
 
 # hyperparameter
-EPOCH = 100
-LEARNING_RATE = 0.001
+EPOCHS = 500
+LEARNING_RATE = 0.0001
 BATCH_SIZE = 64
 
-#shuffle True or Flase
-SHUFFLE = True
+# root path
+ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone' # '~/Desktop/Git/capstone/Capstone'
 
-# tfrecord 및 결과 저장 상위 경로
-CONST_ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone' # '~/Desktop/Git/capstone/Capstone'
+# train/val/test data path
+TRAIN_DATA_PATH = f"{ROOT_PATH}/{DATA}/train_data/"
+VAL_DATA_PATH = f"{ROOT_PATH}/{DATA}/val_data/"
+TEST_DATA_PATH = f"{ROOT_PATH}/{DATA}/test_data/"
 
-# tfrecord 경로 (하위폴더 구조 : (train / val)/*.tfrecords) 
-CONST_DIR_PATH = f"{CONST_ROOT_PATH}/tfrecord/tfrecord_1_2_3_4_5_6_7/"
+# result path
+RESULT_PATH = f"{ROOT_PATH}/result"
+EXPERIMENT_PATH = f"{MODEL_NAME}_{IMAGE_SIZE}_{EPOCHS}_{LEARNING_RATE}_{BATCH_SIZE}"
+RESULT_FILE_PATH = os.path.join(os.path.expanduser(RESULT_PATH), EXPERIMENT_PATH)
+
+# tensorboard path
+TSBOARD_PATH = os.path.join(os.path.expanduser(RESULT_FILE_PATH), "tensorboard")
+
+# checkpoint path
+CHECKPOINT_PATH = os.path.join(os.path.expanduser(RESULT_FILE_PATH), "checkpoint")
+CHECKPOINT_FILE = os.path.join(os.path.expanduser(CHECKPOINT_PATH), 'model-{epoch:03d}-{accuracy:03f}-{val_accuracy:03f}.weights.h5')

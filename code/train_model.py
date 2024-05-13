@@ -1,7 +1,5 @@
 import os
-import pandas as pd
 import tensorflow as tf
-import matplotlib.pyplot as plt
 from utils import *
 from train_config import *
 from pytz import timezone
@@ -59,7 +57,6 @@ class Train_model:
         print("Val_Recall : ", history.history['val_recall'][-1])
         
         return history
-
 
 start = datetime.now(timezone('Asia/Seoul'))
 print(f"Train start : {start}")

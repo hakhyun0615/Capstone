@@ -48,7 +48,7 @@ def save_result(history):
     epoch_list = list(epochs)
 
     df = pd.DataFrame({'epoch': epoch_list, 'train_accuracy': accuracy, 'train_loss': loss, 'train_precision': precision, 'train_recall': recall, 'validation_accuracy': val_accuracy, 'validation_loss': val_loss, 'validation_precision': val_precision, 'validation_recall': val_recall},
-                        columns=['epoch', 'train_accuracy', 'train_loss', 'train_precision', 'train_recall', 'validation_accuracy', 'validation_loss', 'validation_precision', 'validation_recall'])
+                            columns=['epoch', 'train_accuracy', 'train_loss', 'train_precision', 'train_recall', 'validation_accuracy', 'validation_loss', 'validation_precision', 'validation_recall'])
     df_save_path = os.path.join(os.path.expanduser(RESULT_FILE_PATH), 'result.csv')
     df.to_csv(df_save_path, index=False, encoding='euc-kr')
 

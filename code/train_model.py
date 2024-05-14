@@ -30,7 +30,7 @@ class Train_model:
         train_generator, val_generator = self.data.build_generators('train')
         optimizer = SGD(learning_rate=LEARNING_RATE, momentum=0.999, nesterov=True)
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, mode='min')
-        check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_acc', save_best_only=True, mode='max', save_weights_only=True)
+        check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_accuracy', save_best_only=True, mode='max', save_weights_only=True)
         tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
         
         model = self.model.build_model()

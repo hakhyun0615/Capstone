@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import sys
+import logging
 from utils import *
 from train_config import *
 from pytz import timezone
@@ -8,7 +9,7 @@ from datetime import datetime
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.metrics import Precision, Recall
-from import_data import Import_data
+from import_data import Import_data, Import_triplet_data
 from load_model import Load_model
 
 '''
@@ -23,30 +24,53 @@ if len(physical_devices) > 0:
 
 class Train_model:
     def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs): 
+        self.model_name = model_name
         self.model = Load_model(model_name, image_size)
-        self.data = Import_data(image_size, batch_size, train_data_path=train_data_path, val_data_path=val_data_path)
+        if self.model_name == 'TripletNet':
+            self.train_triplet_generator = Import_triplet_data(TRAIN_DATA_PATH, batch_size, image_size)
+            self.val_triplet_generator = Import_triplet_data(VAL_DATA_PATH, batch_size, image_size)
+        else:
+            self.train_generator, self.val_generator = Import_data(image_size, batch_size, train_data_path=train_data_path, val_data_path=val_data_path).build_generators('train')
         self.epochs = epochs
 
+
     def train(self):
-        train_generator, val_generator = self.data.build_generators('train')
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, mode='min')
         check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_accuracy', save_best_only=True, mode='max', save_weights_only=True)
         tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
         
         model = self.model.build_model()
-        model.compile(loss='categorical_crossentropy',
-                      optimizer=Adam(learning_rate=LEARNING_RATE),
-                      metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
 
-        history = model.fit(
-            train_generator,
-            steps_per_epoch=train_generator.samples//train_generator.batch_size,
-            validation_data=val_generator,
-            validation_steps=val_generator.samples//val_generator.batch_size,
-            epochs = self.epochs,
-            callbacks = [check_point, tbd_callback, early_stopping],
-            verbose=1
-        )
+        if self.model_name == 'TripletNet':
+            model.add_loss(triplet_loss(model.outputs[0], model.outputs[1], model.outputs[2]))
+            model.compile(
+                optimizer=Adam(learning_rate=LEARNING_RATE),
+                metrics=['accuracy', Precision(name='precision'), Recall(name='recall')]
+            )
+            history = model.fit(
+                self.train_triplet_generator,
+                steps_per_epoch=len(self.train_triplet_generator),
+                validation_data=self.val_triplet_generator,
+                validation_steps=len(self.val_triplet_generator),
+                epochs=self.epochs,
+                callbacks=[check_point, tbd_callback, early_stopping],
+                verbose=1
+            )
+        else:
+            model.compile(
+                loss='categorical_crossentropy',
+                optimizer=Adam(learning_rate=LEARNING_RATE),
+                metrics=['accuracy', Precision(name='precision'), Recall(name='recall')]
+            )
+            history = model.fit(
+                self.train_generator,
+                steps_per_epoch=self.train_generator.samples//self.train_generator.batch_size,
+                validation_data=self.val_generator,
+                validation_steps=self.val_generator.samples//self.val_generator.batch_size,
+                epochs=self.epochs,
+                callbacks=[check_point, tbd_callback, early_stopping],
+                verbose=1
+            )
 
         print("Train_Accuracy : ", history.history['accuracy'][-1])
         print("Train_Precision : ", history.history['precision'][-1])
@@ -68,8 +92,13 @@ if __name__ == '__main__':
     if not os.path.exists(CHECKPOINT_PATH):
         os.makedirs(CHECKPOINT_PATH)
 
-    log_file = open(f'{RESULT_FILE_PATH}/train_log.txt', 'a', encoding='utf8')
-    sys.stdout = log_file   
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        handlers=[
+                            logging.FileHandler(f'{RESULT_FILE_PATH}/train_log.txt', 'a', 'utf-8'),
+                            logging.StreamHandler(sys.stdout)
+                        ])
+    logger = logging.getLogger()
 
     train_model = Train_model(train_data_path=TRAIN_DATA_PATH,
                               val_data_path=VAL_DATA_PATH,
@@ -80,9 +109,6 @@ if __name__ == '__main__':
      
     history = train_model.train()
     save_result(history)
-
-    log_file.close()
-    sys.stdout = sys.__stdout__
 
 end = datetime.now(timezone('Asia/Seoul'))
 print(f"Train end : {end}")

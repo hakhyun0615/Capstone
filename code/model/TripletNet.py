@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D, BatchNormalization
 from tensorflow.keras.models import Model
 
-class FaceNet_model:
+class TripletNet_model:
     def __init__(self, image_size):
         self.image_shape = (image_size,image_size,3)
 

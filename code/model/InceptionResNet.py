@@ -18,6 +18,7 @@ class InceptionResNet_model:
         x = tf.keras.applications.inception_resnet_v2.preprocess_input(inputs)
         x = model(x, training=False)
         x = GlobalAveragePooling2D()(x)
+        x = Dense(512, activation='relu')(x)
         outputs = Dense(7, activation='softmax')(x)
 
         return Model(inputs=inputs, outputs=outputs)

@@ -1,11 +1,12 @@
 import os
 import tensorflow as tf
+import sys
 from utils import *
 from train_config import *
 from pytz import timezone
 from datetime import datetime
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
-from tensorflow.keras.optimizers import SGD  
+from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.metrics import Precision, Recall
 from import_data import Import_data
 from load_model import Load_model
@@ -28,14 +29,13 @@ class Train_model:
 
     def train(self):
         train_generator, val_generator = self.data.build_generators('train')
-        optimizer = SGD(learning_rate=LEARNING_RATE, momentum=0.999, nesterov=True)
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, mode='min')
         check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_accuracy', save_best_only=True, mode='max', save_weights_only=True)
         tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
         
         model = self.model.build_model()
-        model.compile(loss= 'categorical_crossentropy',
-                      optimizer=optimizer,
+        model.compile(loss='categorical_crossentropy',
+                      optimizer=Adam(learning_rate=LEARNING_RATE),
                       metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
 
         history = model.fit(
@@ -68,6 +68,9 @@ if __name__ == '__main__':
     if not os.path.exists(CHECKPOINT_PATH):
         os.makedirs(CHECKPOINT_PATH)
 
+    log_file = open(f'{RESULT_FILE_PATH}/train_log.txt', 'a', encoding='utf8')
+    sys.stdout = log_file   
+
     train_model = Train_model(train_data_path=TRAIN_DATA_PATH,
                               val_data_path=VAL_DATA_PATH,
                               model_name=MODEL_NAME,
@@ -77,6 +80,9 @@ if __name__ == '__main__':
      
     history = train_model.train()
     save_result(history)
+
+    log_file.close()
+    sys.stdout = sys.__stdout__
 
 end = datetime.now(timezone('Asia/Seoul'))
 print(f"Train end : {end}")

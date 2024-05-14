@@ -1,6 +1,6 @@
 from model.Inception import Inception_model
 from model.InceptionResNet import InceptionResNet_model
-from code.model.TripletNet import FaceNet_model
+from model.TripletNet import TripletNet_model
 
 class Load_model:
     def __init__(self, model_name, image_size):
@@ -13,7 +13,7 @@ class Load_model:
         elif self.model_name == 'InceptionResNet':
             model = InceptionResNet_model(self.image_size).configure_model()
         elif self.model_name == 'TripletNet':
-            model = FaceNet_model(self.image_size).configure_model()
+            model = TripletNet_model(self.image_size).configure_model()
         else:
             raise ValueError(f"Unsupported model name: {self.model_name}")
             

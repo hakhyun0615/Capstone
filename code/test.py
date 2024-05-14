@@ -3,97 +3,67 @@ import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 from pytz import timezone
 from datetime import datetime
+from train_config import *
 from test_config import *
-from tfrecord_convert import tfrecord
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense
+from load_model import Load_model
+from import_data import Import_data
+from tensorflow.keras.metrics import Precision, Recall
+from tensorflow.keras.optimizers import SGD  
 from sklearn.metrics import confusion_matrix, classification_report
-from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
-
 import sys
-if not os.path.exists(os.path.expanduser(TEST_FOLDER)):
-    os.makedirs(os.path.expanduser(TEST_FOLDER))
-sys.stdout = open(f'{os.path.expanduser(TEST_FOLDER)}/{LOG_FNAME}.txt', 'a', encoding='utf8')
 
-today = datetime.now(timezone('Asia/Seoul'))
-print(f"test start : {today}")
-
-if TEST_TYPE == 'multi':
-    CLASS_COUNT = 7
-    ACTIVATION = 'softmax'
-    LOSS = 'categorical_crossentropy'
-elif TEST_TYPE == 'binary':
-    CLASS_COUNT = 2
-    ACTIVATION = 'sigmoid'
-    LOSS = 'binary_crossentropy'
-else:
-    print(f"wrong KINDS : {TEST_TYPE}")
-
-
-class Load_model:
-    def __init__(self, model_name):
-        self.num_class = CLASS_COUNT
-        self.model_name = model_name
+class Test_model:
+    def __init__(self, test_data_path, model_name, image_size, batch_size):
+        self.model = Load_model(model_name, image_size)
+        self.data = Import_data(image_size, batch_size, test_data_path=test_data_path)
     
-    def inception_v4(self):
-        network = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(TEST_IMAGE_SIZE, TEST_IMAGE_SIZE, 3),
-        pooling='avg')
-        return network 
-    
-    def build_network(self):
-        if self.model_name == 'inception_v4':
-            network = self.inception_v4() 
-        model = Sequential()
-        model.add(network)
-        model.add(Dense(2048, activation='relu'))
-        model.add(Dense(self.num_class, activation=ACTIVATION))
-        model.summary()
-        return model
+    def test(self):
+        test_generator = self.data.build_generators('test')
+        optimizer = SGD(learning_rate=LEARNING_RATE, momentum=0.999, nesterov=True) 
+        model = self.model.build_model() 
+        model.compile(loss='categorical_crossentropy',
+                      optimizer=optimizer,
+                      metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
+        checkpoint = tf.train.latest_checkpoint(os.path.expanduser(CHECKPOINT_FILE_PATH))
+        model.load_weights(checkpoint)
 
-def create_model():
-    optimizer = tf.keras.optimizers.SGD(learning_rate = TEST_LEARNING_RATE, decay = 1e-5, momentum = 0.999, nesterov = True) 
-    model = Load_model("inception_v4").build_network() 
-    model.compile(loss=LOSS,
-            optimizer=optimizer,
-            metrics=['acc', tf.keras.metrics.Precision(name = 'precision'), tf.keras.metrics.Recall(name = 'recall')])
-    return model
+        eval = model.evaluate(test_generator)
+        print(f'test_loss : {eval[0]}, test_accuracy : {eval[1]}, test_precision : {eval[2]}, test_recall : {eval[3]}')
+        
+        y_true = []
+        y_pred = []
+        preds = model.predict(test_generator)
+        for i, (image, label) in enumerate(test_generator):
+            label_len = len(label)
+            for q in range(label_len):
+                y_true.append(np.argmax(label[q]))
+                y_pred.append(np.argmax(preds[i * test_generator.batch_size + q]))
 
-with tf.device('/cpu:0'):
-    checkpoint = tf.train.latest_checkpoint(os.path.expanduser(MODEL_PATH))
-    model = create_model()
-    model.load_weights(checkpoint)
+        conf_mat = confusion_matrix(y_true, y_pred)
+        df_conf_mat = pd.DataFrame(conf_mat, columns=[str(i) for i in range(conf_mat.shape[0])],
+                                   index=[str(i) for i in range(conf_mat.shape[1])])
+        sns_heatmap = sns.heatmap(data=df_conf_mat, annot=True, fmt='d', linewidths=.5, cmap='BuGn_r')
+        sns_heatmap.get_figure().savefig(f"{TEST_RESULT_FILE_PATH}/confusion_matrix.png")
 
-with tf.device('/cpu:0'):
-    dataset = tfrecord(os.path.expanduser(TEST_PATH), TEST_TYPE, TEST_IMAGE_SIZE).batch(TEST_BATCH_SIZE)
+        target_names = [str(i) for i in range(conf_mat.shape[0])]
+        print(classification_report(y_true, y_pred, digits=5, target_names=target_names))
 
-test = model.evaluate(dataset, batch_size = TEST_BATCH_SIZE)
+if not os.path.exists(TEST_RESULT_FILE_PATH):
+    os.makedirs(TEST_RESULT_FILE_PATH)
 
-p = model.predict(dataset)
+log_file = open(f'{TEST_RESULT_FILE_PATH}/test_log.txt', 'a', encoding='utf8')
+sys.stdout = log_file        
 
-DATASET_COUNT = len(list(dataset))
+start = datetime.now(timezone('Asia/Seoul'))
+print(f"Test start : {start}")
 
-y_true = []
-y_pred = []
+test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE)
+test_model.test()
 
-i=0
-for image, label in dataset.take(DATASET_COUNT):
-    i+=1
-    label_len = len(label)
-    for q in range(label_len):
-        y_true.append(np.argmax(label[q])+1)
-        y_pred.append(np.argmax(p[(i-1) * TEST_BATCH_SIZE + q])+1)
+end = datetime.now(timezone('Asia/Seoul'))
+print(f"Test end : {end}")
 
-conf_mat = confusion_matrix(y_true, y_pred)
-df_conf_mat = pd.DataFrame(conf_mat, columns = TEST_CLASS, index = TEST_CLASS)
-sns_heatmap = sns.heatmap(data = df_conf_mat, annot = True, fmt = '', linewidths = .5, cmap = 'BuGn_r')
-sns_heatmap.get_figure().savefig(f"{os.path.expanduser(TEST_FOLDER)}/{CONFUSION_MATRIX_FNAME}.png")
-
-print(f'test_loss : {test[0]}, test_acc : {test[1]}, test_precision : {test[2]}, test_recall : {test[3]}')
-
-print(classification_report(y_true, y_pred, digits = 5, target_names = TEST_CLASS))
-
-today1 = datetime.now(timezone('Asia/Seoul'))
-print(f"test end : {today1}")
+log_file.close()
+sys.stdout = sys.__stdout__

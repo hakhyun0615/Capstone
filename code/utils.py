@@ -49,23 +49,20 @@ def save_result(history):
 
     df = pd.DataFrame({'epoch': epoch_list, 'train_accuracy': accuracy, 'train_loss': loss, 'train_precision': precision, 'train_recall': recall, 'validation_accuracy': val_accuracy, 'validation_loss': val_loss, 'validation_precision': val_precision, 'validation_recall': val_recall},
                             columns=['epoch', 'train_accuracy', 'train_loss', 'train_precision', 'train_recall', 'validation_accuracy', 'validation_loss', 'validation_precision', 'validation_recall'])
-    df_save_path = os.path.join(os.path.expanduser(RESULT_FILE_PATH), 'result.csv')
-    df.to_csv(df_save_path, index=False, encoding='euc-kr')
+    df.to_csv(os.path.join(RESULT_FILE_PATH, 'result.csv'), index=False, encoding='euc-kr')
 
     plt.plot(epochs, accuracy, 'b', label='Training accuracy')
     plt.plot(epochs, val_accuracy, 'r', label='Validation accuracy')
     plt.title('Training and validation accuracy')
     plt.legend()
-    save_path = os.path.join(os.path.expanduser(RESULT_FILE_PATH), 'accuracy.png')
-    plt.savefig(save_path)
+    plt.savefig(os.path.join(RESULT_FILE_PATH, 'accuracy.png'))
     plt.cla()
 
     plt.plot(epochs, loss, 'b', label='Training loss')
     plt.plot(epochs, val_loss, 'r', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
-    save_path = os.path.join(os.path.expanduser(RESULT_FILE_PATH), 'loss.png')
-    plt.savefig(save_path)
+    plt.savefig(os.path.join(RESULT_FILE_PATH, 'loss.png'))
     plt.cla()
 
     K.clear_session()

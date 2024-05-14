@@ -3,14 +3,15 @@ from PIL import ImageFile
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 class Import_data:
-    def __init__(self, train_data_path, val_data_path, image_size, batch_size):
+    def __init__(self, image_size, batch_size, train_data_path=None, val_data_path=None, test_data_path=None):
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         self.train_data_path = train_data_path
         self.val_data_path = val_data_path
+        self.test_data_path = test_data_path
         self.image_size = image_size
         self.batch_size = batch_size
 
-    def build_generators(self):
+    def build_generators(self, which_model):
         # data 전처리
         data_generator = ImageDataGenerator(
             # rescale=1./255,
@@ -26,22 +27,38 @@ class Import_data:
             # cval=0
         )
         
-        # batch_size만큼 train_data 불러오기
-        train_generator = data_generator.flow_from_directory(
-            self.train_data_path,
-            target_size=(self.image_size, self.image_size),
-            batch_size=self.batch_size,
-            class_mode='categorical',
-            shuffle=True
-        )
-        
-        # batch_size만큼 val_data 불러오기
-        val_generator = data_generator.flow_from_directory(
-            self.val_data_path,
-            target_size=(self.image_size, self.image_size),
-            batch_size=self.batch_size,
-            class_mode='categorical',
-            shuffle=False
-        )
-        
-        return train_generator, val_generator
+        if which_model == 'train':
+            # batch_size만큼 train_data 불러오기
+            train_generator = data_generator.flow_from_directory(
+                self.train_data_path,
+                target_size=(self.image_size, self.image_size),
+                batch_size=self.batch_size,
+                class_mode='categorical',
+                shuffle=True
+            )
+            
+            # batch_size만큼 val_data 불러오기
+            val_generator = data_generator.flow_from_directory(
+                self.val_data_path,
+                target_size=(self.image_size, self.image_size),
+                batch_size=self.batch_size,
+                class_mode='categorical',
+                shuffle=False
+            )
+            
+            return train_generator, val_generator
+
+        elif which_model == 'test':
+            # batch_size만큼 train_data 불러오기
+            test_generator = data_generator.flow_from_directory(
+                self.test_data_path,
+                target_size=(self.image_size, self.image_size),
+                batch_size=self.batch_size,
+                class_mode='categorical',
+                shuffle=True
+            )
+
+            return test_generator
+
+        else:
+            raise ValueError(f"Unsupported which_model: {which_model}")

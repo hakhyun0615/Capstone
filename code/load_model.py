@@ -15,7 +15,7 @@ class Load_model:
         elif self.model_name == 'FaceNet':
             model = FaceNet_model(self.image_size).configure_model()
         else:
-            raise ValueError(f"unsupported model name: {self.model_name}")
+            raise ValueError(f"Unsupported model name: {self.model_name}")
             
         model.summary()
 

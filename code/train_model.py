@@ -22,18 +22,18 @@ if len(physical_devices) > 0:
 
 class Train_model:
     def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs): 
-        self.data = Import_data(train_data_path, val_data_path, image_size, batch_size)
         self.model = Load_model(model_name, image_size)
+        self.data = Import_data(image_size, batch_size, train_data_path=train_data_path, val_data_path=val_data_path)
         self.epochs = epochs
 
     def train(self):
-        train_generator, val_generator = self.data.build_generators()
-        model = self.model.build_model()
+        train_generator, val_generator = self.data.build_generators('train')
         optimizer = SGD(learning_rate=LEARNING_RATE, momentum=0.999, nesterov=True)
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, mode='min')
-        check_point = ModelCheckpoint(CHECKPOINT_FILE, verbose=1, monitor='val_acc', save_best_only=True, mode='max', save_weights_only=True)
+        check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_acc', save_best_only=True, mode='max', save_weights_only=True)
         tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
         
+        model = self.model.build_model()
         model.compile(loss= 'categorical_crossentropy',
                       optimizer=optimizer,
                       metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
@@ -68,11 +68,11 @@ if __name__ == '__main__':
     if not os.path.exists(CHECKPOINT_PATH):
         os.makedirs(CHECKPOINT_PATH)
 
-    train_model = Train_model(train_data_path = TRAIN_DATA_PATH,
-                              val_data_path = VAL_DATA_PATH,
-                              model_name = MODEL_NAME,
-                              image_size = IMAGE_SIZE,
-                              batch_size = BATCH_SIZE,
+    train_model = Train_model(train_data_path=TRAIN_DATA_PATH,
+                              val_data_path=VAL_DATA_PATH,
+                              model_name=MODEL_NAME,
+                              image_size=IMAGE_SIZE,
+                              batch_size=BATCH_SIZE,
                               epochs=EPOCHS)
      
     history = train_model.train()

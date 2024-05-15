@@ -3,7 +3,7 @@ import os
 DATA = 'original_data'
 
 # model
-MODEL_NAME = 'InceptionResNet'
+MODEL_NAME = 'TripletNet'
 IMAGE_SIZE = 299
 
 # hyperparameter

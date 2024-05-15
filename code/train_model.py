@@ -35,7 +35,7 @@ class Train_model:
 
 
     def train(self):
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, mode='min')
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='min')
         check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_accuracy', save_best_only=True, mode='max', save_weights_only=True)
         tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
         

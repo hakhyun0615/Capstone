@@ -29,4 +29,4 @@ TSBOARD_PATH = os.path.join(RESULT_FILE_PATH, 'tensorboard')
 
 # checkpoint path
 CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'checkpoint')
-CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'model-{epoch:03d}-{accuracy:03f}-{val_accuracy:03f}.weights.h5')
+CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'epoch-{epoch:03d}.weights.h5')

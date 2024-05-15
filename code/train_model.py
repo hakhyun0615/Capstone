@@ -36,7 +36,7 @@ class Train_model:
 
     def train(self):
         early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='min')
-        check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_accuracy', save_best_only=True, mode='max', save_weights_only=True)
+        check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
         tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
         
         model = self.model.build_model()
@@ -69,14 +69,6 @@ class Train_model:
                 callbacks=[check_point, tbd_callback, early_stopping],
                 verbose=1
             )
-
-        print("Train_Accuracy : ", history.history['accuracy'][-1])
-        print("Train_Precision : ", history.history['precision'][-1])
-        print("Train_Recall : ", history.history['recall'][-1])
-
-        print("Val_Accuracy : ", history.history['val_accuracy'][-1])
-        print("Val_Precision : ", history.history['val_precision'][-1])
-        print("Val_Recall : ", history.history['val_recall'][-1])
         
         return history
 

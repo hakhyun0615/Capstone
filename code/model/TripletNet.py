@@ -4,20 +4,21 @@ from tensorflow.keras.models import Model
 import tensorflow.keras.backend as K
 
 class TripletNet_model:
-    def __init__(self, image_size):
+    def __init__(self, image_size, weight_path):
         self.image_shape = (image_size,image_size,3)
+        self.weight_path = weight_path
 
     def create_base_model(self):
         model = tf.keras.applications.InceptionResNetV2(
             input_shape=self.image_shape, 
             include_top=False, 
-            weights='imagenet'
+            weights=None
         )
+        model.load_weights(self.weight_path)
         model.trainable = False
         
         inputs = Input(shape=self.image_shape)
-        x = tf.keras.applications.inception_resnet_v2.preprocess_input(inputs)
-        x = model(x, training=False)
+        x = model(inputs, training=False)
         x = GlobalAveragePooling2D()(x)
         x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)

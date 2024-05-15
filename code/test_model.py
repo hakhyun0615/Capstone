@@ -117,15 +117,7 @@ print(f"Test start : {start}")
 
 if __name__ == '__main__':
     if not os.path.exists(TEST_RESULT_FILE_PATH):
-        os.makedirs(TEST_RESULT_FILE_PATH)
-
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[
-                            logging.FileHandler(f'{RESULT_FILE_PATH}/test_log.txt', 'a', 'utf-8'),
-                            logging.StreamHandler(sys.stdout)
-                        ])
-    logger = logging.getLogger()      
+        os.makedirs(TEST_RESULT_FILE_PATH) 
 
     test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE)
     test_model.test()

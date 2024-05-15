@@ -3,6 +3,8 @@ from train_config import *
 from PIL import ImageFile, Image
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
+
 
 class Import_data:
     def __init__(self, image_size, batch_size, train_data_path=None, val_data_path=None, test_data_path=None):
@@ -16,6 +18,7 @@ class Import_data:
     def build_generators(self, which_model):
         # data 전처리
         data_generator = ImageDataGenerator(
+            preprocessing_function=preprocess_input,
             # rescale=1./255,
             # featurewise_std_normalization=True,
             # shear_range=0.2, 
@@ -119,6 +122,7 @@ class Import_triplet_data(Sequence):
         img = np.array(img)
         if img.ndim == 2:
             img = np.stack((img,) * 3, axis=-1)
+        img = preprocess_input(img.astype('float32'))
         return img
     
     def on_epoch_end(self):

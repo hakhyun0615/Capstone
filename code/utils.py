@@ -25,7 +25,7 @@ def save_result(history):
     val_precision = history.history['val_precision']
     val_recall = history.history['val_recall']
 
-    epochs = range(len(accuracy))
+    epochs = range(1,len(accuracy)+1)
     epoch_list = list(epochs)
 
     df = pd.DataFrame({'epoch': epoch_list, 'train_accuracy': accuracy, 'train_loss': loss, 'train_precision': precision, 'train_recall': recall, 'validation_accuracy': val_accuracy, 'validation_loss': val_loss, 'validation_precision': val_precision, 'validation_recall': val_recall},

@@ -43,10 +43,8 @@ class Train_model:
 
         if self.model_name == 'TripletNet':
             model.add_loss(triplet_loss(model.outputs[0], model.outputs[1], model.outputs[2]))
-            model.compile(
-                optimizer=Adam(learning_rate=LEARNING_RATE),
-                metrics=['accuracy', Precision(name='precision'), Recall(name='recall')]
-            )
+            model.compile(optimizer=Adam(learning_rate=LEARNING_RATE))
+
             history = model.fit(
                 self.train_triplet_generator,
                 steps_per_epoch=len(self.train_triplet_generator),

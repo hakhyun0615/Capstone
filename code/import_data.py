@@ -67,6 +67,7 @@ class Import_data:
         
 class Import_triplet_data(Sequence):
     def __init__(self, data_dir, batch_size, image_size):
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.image_size = image_size
@@ -92,6 +93,7 @@ class Import_triplet_data(Sequence):
             anchor, positive, negative = self.sample_triplet()
             batch.append([anchor, positive, negative])
         batch = np.array(batch) # (batch_size, 3, image_size, image_size, channels)
+
         return [batch[:, 0], batch[:, 1], batch[:, 2]], np.zeros((self.batch_size, 1)) # batch[:, 0]: (batch_size, image_size, image_size, channels) # np.zeros((self.batch_size, 1): not used
 
     def __len__(self):

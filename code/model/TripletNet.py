@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D, BatchNormalization
+from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D, BatchNormalization, Lambda
 from tensorflow.keras.models import Model
 import tensorflow.keras.backend as K
 
@@ -21,7 +21,7 @@ class TripletNet_model:
         x = GlobalAveragePooling2D()(x)
         x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)
-        outputs = tf.keras.layers.Lambda(lambda x: K.l2_normalize(x, axis=1))(x)
+        outputs = Lambda(lambda x: K.l2_normalize(x, axis=1))(x)
 
         return Model(inputs=inputs, outputs=outputs)
 

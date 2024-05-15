@@ -12,7 +12,7 @@ directory = sys.argv[1]
 # 원본 데이터 폴더
 data_path = f'../../{directory}/'
 # 클래스 목록
-classes = ['1','2','3', '4','5','6','7']
+classes = ['1','2','3','4','5','6','7']
 # 데이터 분할 비율
 splits = {'train': 0.7, 'val': 0.15, 'test': 0.15}  
 

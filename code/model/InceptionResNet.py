@@ -12,11 +12,10 @@ class InceptionResNet_model:
             include_top=False, 
             weights='imagenet'
         )
-        model.trainable = False
-        
+        model.trainable = False # freeze
+
         inputs = Input(shape=self.image_shape)
-        x = tf.keras.applications.inception_resnet_v2.preprocess_input(inputs)
-        x = model(x, training=False)
+        x = model(inputs, training=False)
         x = GlobalAveragePooling2D()(x)
         x = Dense(512, activation='relu')(x)
         outputs = Dense(7, activation='softmax')(x)

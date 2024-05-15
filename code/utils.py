@@ -3,7 +3,31 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras.backend as K
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.metrics import Precision, Recall
 from train_config import *
+
+'''
+if InceptionResNet,
+    initial train: with the model frozen, train the top layers 
+    fine tune: if early_stopping triggered, with the the model unfrozen, train the entire model with a lower learning rate 
+'''
+class FineTune(tf.keras.callbacks.Callback):
+    def __init__(self, model, new_learning_rate):
+        super(FineTune, self).__init__()
+        self.model = model
+        self.new_learning_rate = new_learning_rate
+
+    def on_epoch_end(self, epoch, logs=None):
+        if self.model.stop_training:  # if early_stopped,
+            print("\nSwitching to fine-tuning phase...")
+            self.model.trainable = True # unfreeze
+            self.model.compile(
+                loss='categorical_crossentropy',
+                optimizer=Adam(learning_rate=self.new_learning_rate),
+                metrics=['accuracy', Precision(name='precision'), Recall(name='recall')]
+            )
+            self.model.stop_training = False  # continue training
 
 def triplet_loss(anchor, positive, negative, alpha=0.2):
     pos_dist = tf.reduce_sum(tf.square(anchor - positive), axis=1)

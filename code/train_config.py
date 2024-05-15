@@ -5,11 +5,15 @@ DATA = 'original_data'
 # model
 MODEL_NAME = 'TripletNet'
 IMAGE_SIZE = 299
+'''
+if TripletNet, use weight path
+'''
+WEIGHT_PATH = 'path/to/your/weights.h5'
 
 # hyperparameter
 EPOCHS = 500
-LEARNING_RATE = 0.0001
-BATCH_SIZE = 128
+LEARNING_RATE = 0.0003
+BATCH_SIZE = 256
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'
@@ -29,4 +33,6 @@ TSBOARD_PATH = os.path.join(RESULT_FILE_PATH, 'tensorboard')
 
 # checkpoint path
 CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'checkpoint')
-CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'epoch-{epoch:03d}.weights.h5')
+CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}.weights.h5')
+
+

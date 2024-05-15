@@ -3,7 +3,7 @@ import os
 DATA = 'original_data'
 
 # model
-MODEL_NAME = 'TripletNet'
+MODEL_NAME = 'InceptionResNet'
 IMAGE_SIZE = 299
 '''
 if TripletNet, use weight path
@@ -11,7 +11,7 @@ if TripletNet, use weight path
 WEIGHT_PATH = 'path/to/your/weights.h5'
 
 # hyperparameter
-EPOCHS = 500
+EPOCHS = 1000
 LEARNING_RATE = 0.0003
 BATCH_SIZE = 256
 
@@ -34,5 +34,3 @@ TSBOARD_PATH = os.path.join(RESULT_FILE_PATH, 'tensorboard')
 # checkpoint path
 CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'checkpoint')
 CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}.weights.h5')
-
-

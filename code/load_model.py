@@ -2,7 +2,7 @@ from model.InceptionResNet import InceptionResNet_model
 from model.TripletNet import TripletNet_model
 
 class Load_model:
-    def __init__(self, model_name, image_size, weight_path):
+    def __init__(self, model_name, image_size, weight_path=None):
         self.model_name = model_name
         self.image_size = image_size
         self.weight_path = weight_path

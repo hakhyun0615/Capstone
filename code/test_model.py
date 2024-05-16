@@ -11,77 +11,40 @@ from test_config import *
 from utils import *
 from load_model import Load_model
 from import_data import Import_data, Import_triplet_data
+from tensorflow.train import latest_checkpoint
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import confusion_matrix, classification_report
 import sys
 
 class Test_model:
-    def __init__(self, test_data_path, model_name, image_size, batch_size):
+    def __init__(self, test_data_path, model_name, image_size, batch_size, epochs, learning_rate, weight_path=None):
         self.model_name = model_name
-        self.model = Load_model(model_name, image_size)
         if self.model_name == 'TripletNet':
+            self.model = Load_model(model_name, image_size, weight_path)
             self.test_triplet_generator = Import_triplet_data(test_data_path, batch_size, image_size)
         else:
+            self.model = Load_model(model_name, image_size)
             self.test_generator = Import_data(image_size, batch_size, test_data_path=test_data_path).build_generators('test')
+        self.epochs = epochs
+        self.learning_rate = learning_rate
 
-    def create_embedding_database(self, train_generator, model):
-        database = {}
-        for batch, labels in train_generator:
-            embeddings = model.predict(batch)
-            for emb, label in zip(embeddings, labels):
-                label = np.argmax(label)  # Assuming labels are one-hot encoded
-                if label not in database:
-                    database[label] = []
-                database[label].append(emb)
-        # Average embeddings for each label
-        for label in database:
-            database[label] = np.mean(database[label], axis=0)
-        return database
-    
-    def predict_label(self, embedding, database):
-        min_dist = float('inf')
-        identity = None
-
-        for label, db_emb in database.items():
-            dist = np.linalg.norm(embedding - db_emb)
-            if dist < min_dist:
-                min_dist = dist
-                identity = label
-        
-        return identity, min_dist
-
-    def evaluate_triplet_model(self, test_generator, database, model):
-        y_true = []
-        y_pred = []
-
-        for batch, labels in test_generator:
-            embeddings = model.predict(batch)
-            for emb, label in zip(embeddings, labels):
-                true_label = np.argmax(label)  # Assuming labels are one-hot encoded
-                pred_label, _ = self.predict_label(emb, database)
-                y_true.append(true_label)
-                y_pred.append(pred_label)
-        
-        accuracy = np.mean(np.array(y_true) == np.array(y_pred))
-        precision = Precision()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
-        recall = Recall()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
-
-        print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}")
-        return accuracy, precision, recall
-
-    
     def test(self):
         model = self.model.build_model() 
         if self.model_name == 'TripletNet':
             model.add_loss(triplet_loss(model.outputs[0], model.outputs[1], model.outputs[2]))
-            model.compile(optimizer=Adam(learning_rate=LEARNING_RATE))
+            model.compile(optimizer=Adam(learning_rate=self.learning_rate))
         else:
             model.compile(loss='categorical_crossentropy',
-                          optimizer=Adam(learning_rate=LEARNING_RATE),
+                          optimizer=Adam(learning_rate=self.learning_rate),
                           metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
         
-        checkpoint = tf.train.latest_checkpoint(os.path.expanduser(CHECKPOINT_FILE_PATH))
+        checkpoint = latest_checkpoint(os.path.expanduser(CHECKPOINT_FILE_PATH))
+        if checkpoint:
+            print(f"Checkpoint found: {checkpoint}")
+            model.load_weights(checkpoint)
+        else:
+            print("No checkpoint found")
         model.load_weights(checkpoint)
 
         if self.model_name == 'TripletNet':
@@ -91,17 +54,15 @@ class Test_model:
             # Evaluate the model on the test data
             self.evaluate_triplet_model(self.test_triplet_generator, database, model)
         else:
-            eval = model.evaluate(self.test_generator)
+            eval = model.evaluate(self.test_generator) # [test_loss, test_accuracy, test_precision, test_recall]
+            with open(f"{TEST_RESULT_FILE_PATH}/evaluation.txt", "w") as file:
+                file.write(f"test_loss: {eval[0]}, test_accuracy: {eval[1]}, test_precision: {eval[2]}, test_recall: {eval[3]}\n")
             print(f'test_loss : {eval[0]}, test_accuracy : {eval[1]}, test_precision : {eval[2]}, test_recall : {eval[3]}')
-            
-            y_true = []
-            y_pred = []
-            preds = model.predict(self.test_generator)
-            for i, (image, label) in enumerate(self.test_generator):
-                label_len = len(label)
-                for q in range(label_len):
-                    y_true.append(np.argmax(label[q]))
-                    y_pred.append(np.argmax(preds[i * self.test_generator.batch_size + q]))
+
+            y_pred = np.argmax(model.predict(self.test_generator), axis=-1) + 1 
+            y_true = self.test_generator.labels + 1
+            np.save(f"{TEST_RESULT_FILE_PATH}/y_pred.npy", y_pred)
+            np.save(f"{TEST_RESULT_FILE_PATH}/y_true.npy", y_true)
 
             conf_mat = confusion_matrix(y_true, y_pred)
             df_conf_mat = pd.DataFrame(conf_mat, columns=[str(i) for i in range(conf_mat.shape[0])],
@@ -118,8 +79,7 @@ print(f"Test start : {start}")
 if __name__ == '__main__':
     if not os.path.exists(TEST_RESULT_FILE_PATH):
         os.makedirs(TEST_RESULT_FILE_PATH) 
-
-    test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE)
+    test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE, EPOCHS, LEARNING_RATE)
     test_model.test()
 
 end = datetime.now(timezone('Asia/Seoul'))

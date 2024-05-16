@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -71,3 +72,48 @@ def save_result(history):
     plt.cla()
 
     K.clear_session()
+
+def create_embedding_database(self, train_generator, model):
+    database = {}
+    for batch, labels in train_generator:
+        embeddings = model.predict(batch)
+        for emb, label in zip(embeddings, labels):
+            label = np.argmax(label)  # Assuming labels are one-hot encoded
+            if label not in database:
+                database[label] = []
+            database[label].append(emb)
+    # Average embeddings for each label
+    for label in database:
+        database[label] = np.mean(database[label], axis=0)
+    return database
+
+def predict_label(self, embedding, database):
+    min_dist = float('inf')
+    identity = None
+
+    for label, db_emb in database.items():
+        dist = np.linalg.norm(embedding - db_emb)
+        if dist < min_dist:
+            min_dist = dist
+            identity = label
+    
+    return identity, min_dist
+
+def evaluate_triplet_model(self, test_generator, database, model):
+    y_true = []
+    y_pred = []
+
+    for batch, labels in test_generator:
+        embeddings = model.predict(batch)
+        for emb, label in zip(embeddings, labels):
+            true_label = np.argmax(label)  # Assuming labels are one-hot encoded
+            pred_label, _ = self.predict_label(emb, database)
+            y_true.append(true_label)
+            y_pred.append(pred_label)
+    
+    accuracy = np.mean(np.array(y_true) == np.array(y_pred))
+    precision = Precision()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
+    recall = Recall()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
+
+    print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}")
+    return accuracy, precision, recall

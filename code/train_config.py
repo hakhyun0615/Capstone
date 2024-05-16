@@ -13,15 +13,14 @@ WEIGHT_PATH = 'path/to/your/weights.h5'
 # hyperparameter
 EPOCHS = 1000
 LEARNING_RATE = 0.0003
-BATCH_SIZE = 128
+BATCH_SIZE = 128 # number of images in a single batch
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'
 
-# train/val/test data path
+# train/val data path
 TRAIN_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'train_data')
 VAL_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'val_data')
-TEST_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'test_data')
 
 # result path
 RESULT_PATH = os.path.join(ROOT_PATH, 'result')

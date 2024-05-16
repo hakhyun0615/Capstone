@@ -38,7 +38,7 @@ class Import_data:
                 self.train_data_path,
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
-                class_mode='categorical',
+                class_mode='categorical', # one-hot encode labels
                 shuffle=True
             )
             

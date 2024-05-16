@@ -10,7 +10,7 @@ from train_config import *
 '''
 if InceptionResNet,
     initial train: with the model frozen, train the top layers 
-    fine tune: if early_stopping triggered, with the the model unfrozen, train the entire model with a lower learning rate 
+    fine tune after early_stopping: with the the model unfrozen, train the entire model with a lower learning rate 
 '''
 class FineTune(tf.keras.callbacks.Callback):
     def __init__(self, model, new_learning_rate):

@@ -13,7 +13,7 @@ WEIGHT_PATH = 'path/to/your/weights.h5'
 # hyperparameter
 EPOCHS = 1000
 LEARNING_RATE = 0.0003
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'
@@ -25,7 +25,7 @@ TEST_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'test_data')
 
 # result path
 RESULT_PATH = os.path.join(ROOT_PATH, 'result')
-EXPERIMENT_PATH = f"{DATA}_{MODEL_NAME}_{IMAGE_SIZE}_{EPOCHS}_{LEARNING_RATE}_{BATCH_SIZE}"
+EXPERIMENT_PATH = f"{MODEL_NAME}_{DATA}_{IMAGE_SIZE}_{EPOCHS}_{LEARNING_RATE}_{BATCH_SIZE}"
 RESULT_FILE_PATH = os.path.join(RESULT_PATH, EXPERIMENT_PATH)
 
 # tensorboard path

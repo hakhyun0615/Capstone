@@ -5,6 +5,7 @@ import tensorflow as tf
 import keras.backend as K
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
+from tensorflow.keras.callbacks import Callback
 from train_config import *
 
 '''
@@ -12,22 +13,41 @@ if InceptionResNet,
     initial train: with the model frozen, train the top layers 
     fine tune after early_stopping: with the the model unfrozen, train the entire model with a lower learning rate 
 '''
-class FineTune(tf.keras.callbacks.Callback):
-    def __init__(self, finetune_model, new_learning_rate):
+
+class FineTune(Callback):
+    def __init__(self, finetune_model, new_learning_rate, train_generator, val_generator, epochs):
         super(FineTune, self).__init__()
         self.finetune_model = finetune_model
         self.new_learning_rate = new_learning_rate
+        self.train_generator = train_generator
+        self.val_generator = val_generator
+        self.epochs = epochs
 
     def on_epoch_end(self, epoch, logs=None):
-        if self.finetune_model.stop_training:  # if early_stopped,
-            print("\nSwitching to fine-tuning phase...")
-            self.finetune_model.trainable = True # unfreeze
-            self.finetune_model.compile(
+        if self.model.stop_training: 
+            print("\nSwitching to fine-tuning phase\n")
+            self.finetune_model.trainable = True 
+            self.model.compile(
                 loss='categorical_crossentropy',
                 optimizer=Adam(learning_rate=self.new_learning_rate),
                 metrics=['accuracy', Precision(name='precision'), Recall(name='recall')]
             )
-            self.finetune_model.stop_training = False  # continue training
+            self.model.stop_training = False
+
+            early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')
+            check_point = ModelCheckpoint(FINETUNE_CHECKPOINT_FILE_PATH, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
+            tbd_callback = TensorBoard(log_dir=FINETUNE_TSBOARD_PATH, histogram_freq=1)
+            
+            self.model.fit(
+                self.train_generator,
+                steps_per_epoch=self.train_generator.samples//self.train_generator.batch_size,
+                validation_data=self.val_generator,
+                validation_steps=self.val_generator.samples//self.val_generator.batch_size,
+                epochs=self.epochs,
+                callbacks=[check_point, tbd_callback, early_stop],
+                verbose=0
+            )
+   
 
 def triplet_loss(anchor, positive, negative, alpha=0.2):
     pos_dist = tf.reduce_sum(tf.square(anchor - positive), axis=1)

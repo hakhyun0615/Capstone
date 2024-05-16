@@ -1,4 +1,5 @@
 import os
+
 # data
 DATA = 'original_data'
 
@@ -12,8 +13,8 @@ WEIGHT_PATH = 'path/to/your/weights.h5'
 
 # hyperparameter
 EPOCHS = 1000
-LEARNING_RATE = 0.0003
-BATCH_SIZE = 128
+LEARNING_RATE = 0.01
+BATCH_SIZE = 256
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'
@@ -30,7 +31,10 @@ RESULT_FILE_PATH = os.path.join(RESULT_PATH, EXPERIMENT_PATH)
 
 # tensorboard path
 TSBOARD_PATH = os.path.join(RESULT_FILE_PATH, 'tensorboard')
+FINETUNE_TSBOARD_PATH = os.path.join(RESULT_FILE_PATH, 'finetune_tensorboard')
 
 # checkpoint path
 CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'checkpoint')
 CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}.weights.h5')
+FINETUNE_CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'finetune_checkpoint')
+FINETUNE_CHECKPOINT_FILE_PATH = os.path.join(FINETUNE_CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}.weights.h5')

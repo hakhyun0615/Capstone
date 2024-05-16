@@ -68,7 +68,7 @@ class Train_model:
                 validation_data=self.val_generator,
                 validation_steps=self.val_generator.samples//self.val_generator.batch_size,
                 epochs=self.epochs,
-                callbacks=[check_point, tbd_callback, early_stop, fine_tune_callback],
+                callbacks=[check_point, tbd_callback, early_stop], # , fine_tune_callback
                 verbose=0
             )
         

@@ -1,0 +1,26 @@
+1. InceptionResNet
+    - original_data
+    1. transfer learning
+        - weight: imagenet
+        - train: top layers
+        - callback: early stopping
+    2. fine tuning
+        - learning rate: lower learning rate
+        - weight: continue
+        - train: entire layers
+        - callback: early stopping
+2. InceptionResNet
+    - cropped_data
+    - image_augmentation
+    1. transfer learning
+        - weight: imagenet
+        - train: top layers
+        - callback: early stopping
+    2. fine tuning
+        - learning rate: lower learning rate
+        - weight: continue
+        - train: entire layers
+        - callback: early stopping
+3. TripletNet
+    - cropped_data
+    - image_augmentation

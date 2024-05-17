@@ -15,7 +15,7 @@ class Import_data:
         self.image_size = image_size
         self.batch_size = batch_size
 
-    def build_generators(self, which_model):
+    def build_generators(self, which_model, start_index=0):
         # data 전처리
         data_generator = ImageDataGenerator(
             preprocessing_function=preprocess_input,
@@ -33,7 +33,7 @@ class Import_data:
         )
         
         if which_model == 'train':
-            # batch_size만큼 train_data 불러오기
+            # make train_data into batches # len(train_generator): number of batches
             train_generator = data_generator.flow_from_directory(
                 self.train_data_path,
                 target_size=(self.image_size, self.image_size),
@@ -42,25 +42,23 @@ class Import_data:
                 shuffle=True
             )
             
-            # batch_size만큼 val_data 불러오기
+            # make val_data into batches
             val_generator = data_generator.flow_from_directory(
                 self.val_data_path,
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
                 class_mode='categorical',
-                shuffle=False
             )
             
             return train_generator, val_generator
 
         elif which_model == 'test':
-            # batch_size만큼 train_data 불러오기
+            # make test_data into batches
             test_generator = data_generator.flow_from_directory(
                 self.test_data_path,
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
                 class_mode='categorical',
-                shuffle=True
             )
 
             return test_generator

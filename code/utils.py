@@ -6,58 +6,9 @@ import tensorflow as tf
 import keras.backend as K
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
-from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
 from train_config import *
-
-'''
-if InceptionResNet,
-    initial train: with the model frozen, train the top layers 
-    fine tune after early_stopping: with the the model unfrozen, train the entire model with a lower learning rate 
-'''
-
-class FineTune(Callback):
-    def __init__(self, finetune_model, new_learning_rate, train_generator, val_generator, epochs):
-        super(FineTune, self).__init__()
-        self.finetune_model = finetune_model
-        self.new_learning_rate = new_learning_rate
-        self.train_generator = train_generator
-        self.val_generator = val_generator
-        self.epochs = epochs
-
-    def on_epoch_end(self, epoch, logs=None):
-        if self.model.stop_training: 
-            print("\nSwitching to fine-tuning phase\n")
-            self.finetune_model.trainable = True 
-            self.model.compile(
-                loss='categorical_crossentropy',
-                optimizer=Adam(learning_rate=self.new_learning_rate),
-                metrics=['accuracy', Precision(name='precision'), Recall(name='recall')]
-            )
-            self.model.stop_training = False
-
-            early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')
-            check_point = ModelCheckpoint(FINETUNE_CHECKPOINT_FILE_PATH, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
-            tbd_callback = TensorBoard(log_dir=FINETUNE_TSBOARD_PATH, histogram_freq=1)
-            
-            self.model.fit(
-                self.train_generator,
-                steps_per_epoch=self.train_generator.samples//self.train_generator.batch_size,
-                validation_data=self.val_generator,
-                validation_steps=self.val_generator.samples//self.val_generator.batch_size,
-                epochs=self.epochs,
-                callbacks=[check_point, tbd_callback, early_stop],
-                verbose=0
-            )
-   
-
-def triplet_loss(anchor, positive, negative, alpha=0.2):
-    pos_dist = tf.reduce_sum(tf.square(anchor - positive), axis=1)
-    neg_dist = tf.reduce_sum(tf.square(anchor - negative), axis=1)
-    
-    basic_loss = pos_dist - neg_dist + alpha
-    loss = tf.maximum(basic_loss, 0.0)
-    
-    return tf.reduce_mean(loss)
+from import_data import Import_data
 
 def save_result(history):
     accuracy = history.history['accuracy']
@@ -92,6 +43,62 @@ def save_result(history):
     plt.cla()
 
     K.clear_session()
+
+'''
+if InceptionResNet,
+    initial train: with the model frozen, train the top layers 
+    fine tune after early_stopping: with the the model unfrozen, train the entire model with a lower learning rate 
+'''
+
+def create_callbacks(checkpoint_path, checkpoint_file_path, tensorboard_path):
+    if not os.path.exists(checkpoint_path):
+        os.makedirs(checkpoint_path)
+    if not os.path.exists(tensorboard_path):
+        os.makedirs(tensorboard_path)
+
+    early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')
+    check_point = ModelCheckpoint(checkpoint_file_path, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
+    tbd_callback = TensorBoard(log_dir=tensorboard_path, histogram_freq=1)
+    return [early_stop, check_point, tbd_callback]
+
+class FineTune(Callback):
+    def __init__(self, new_learning_rate, train_generator, val_generator, epochs):
+        super(FineTune, self).__init__()
+        self.finetune_flag = True # to ensure that finetune implements once
+        self.new_learning_rate = new_learning_rate
+        self.train_generator = train_generator
+        self.val_generator = val_generator
+        self.epochs = epochs
+
+    def on_epoch_end(self, epoch, logs=None):
+        if self.finetune_flag and self.model.stop_training: 
+            print("\nSwitching to fine-tuning phase\n")
+            self.finetune_flag = False
+
+            self.model.layers[1].trainable = True 
+            K.set_value(self.model.optimizer.learning_rate, self.new_learning_rate)
+            callbacks = create_callbacks(FINETUNE_CHECKPOINT_FILE_PATH, FINETUNE_TSBOARD_PATH)
+
+            self.model.fit(
+                self.train_generator,
+                steps_per_epoch=self.train_generator.samples//self.train_generator.batch_size,
+                validation_data=self.val_generator,
+                validation_steps=self.val_generator.samples//self.val_generator.batch_size,
+                initial_epoch=epoch,
+                epochs=self.epochs,
+                callbacks=callbacks,
+                verbose=0
+            )
+   
+
+def triplet_loss(anchor, positive, negative, alpha=0.2):
+    pos_dist = tf.reduce_sum(tf.square(anchor - positive), axis=1)
+    neg_dist = tf.reduce_sum(tf.square(anchor - negative), axis=1)
+    
+    basic_loss = pos_dist - neg_dist + alpha
+    loss = tf.maximum(basic_loss, 0.0)
+    
+    return tf.reduce_mean(loss)
 
 def create_embedding_database(self, train_generator, model):
     database = {}

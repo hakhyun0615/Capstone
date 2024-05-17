@@ -37,9 +37,7 @@ class Train_model:
 
 
     def train(self):
-        early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')
-        check_point = ModelCheckpoint(CHECKPOINT_FILE_PATH, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
-        tbd_callback = TensorBoard(log_dir=TSBOARD_PATH, histogram_freq=1)
+        callbacks = create_callbacks(CHECKPOINT_PATH, CHECKPOINT_FILE_PATH, TSBOARD_PATH)
         
         model = self.model.build_model()
         if self.model_name == 'TripletNet':
@@ -51,11 +49,11 @@ class Train_model:
                 validation_data=self.val_triplet_generator,
                 validation_steps=len(self.val_triplet_generator),
                 epochs=self.epochs,
-                callbacks=[check_point, tbd_callback, early_stop],
+                callbacks=callbacks,
                 verbose=0
             )
         else:
-            fine_tune_callback = FineTune(model.layers[1], self.learning_rate*0.1, self.train_generator, self.val_generator, self.epochs)
+            fine_tune_callback = FineTune(self.learning_rate*0.1, self.train_generator, self.val_generator, self.epochs)
             
             model.compile(
                 loss='categorical_crossentropy',
@@ -68,7 +66,7 @@ class Train_model:
                 validation_data=self.val_generator,
                 validation_steps=self.val_generator.samples//self.val_generator.batch_size,
                 epochs=self.epochs,
-                callbacks=[check_point, tbd_callback, early_stop], # , fine_tune_callback
+                callbacks=callbacks+[fine_tune_callback],
                 verbose=0
             )
         
@@ -78,12 +76,6 @@ start = datetime.now(timezone('Asia/Seoul'))
 print(f"Train start : {start}")
 
 if __name__ == '__main__':
-    if not os.path.exists(TSBOARD_PATH):
-        os.makedirs(TSBOARD_PATH)
-       
-    if not os.path.exists(CHECKPOINT_PATH):
-        os.makedirs(CHECKPOINT_PATH)
-
     if MODEL_NAME == 'TripletNet':
         train_model = Train_model(train_data_path=TRAIN_DATA_PATH,
                                   val_data_path=VAL_DATA_PATH,

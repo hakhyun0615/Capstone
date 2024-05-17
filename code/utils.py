@@ -56,7 +56,7 @@ def create_callbacks(checkpoint_path, checkpoint_file_path, tensorboard_path):
     if not os.path.exists(tensorboard_path):
         os.makedirs(tensorboard_path)
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode='min')
+    early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=0, mode='min')
     check_point = ModelCheckpoint(checkpoint_file_path, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
     tbd_callback = TensorBoard(log_dir=tensorboard_path, histogram_freq=1)
     return [early_stop, check_point, tbd_callback]
@@ -72,19 +72,19 @@ class FineTune(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         if self.finetune_flag and self.model.stop_training: 
-            print("\nSwitching to fine-tuning phase\n")
+            print("\nSwitching to fine-tuning phase")
             self.finetune_flag = False
 
             self.model.layers[1].trainable = True 
             K.set_value(self.model.optimizer.learning_rate, self.new_learning_rate)
-            callbacks = create_callbacks(FINETUNE_CHECKPOINT_FILE_PATH, FINETUNE_TSBOARD_PATH)
+            callbacks = create_callbacks(FINETUNE_CHECKPOINT_PATH, FINETUNE_CHECKPOINT_FILE_PATH, FINETUNE_TSBOARD_PATH)
 
             self.model.fit(
                 self.train_generator,
                 steps_per_epoch=self.train_generator.samples//self.train_generator.batch_size,
                 validation_data=self.val_generator,
                 validation_steps=self.val_generator.samples//self.val_generator.batch_size,
-                initial_epoch=epoch,
+                initial_epoch=epoch+1,
                 epochs=self.epochs,
                 callbacks=callbacks,
                 verbose=0

@@ -1,7 +1,7 @@
 import os
 
 # data
-DATA = 'sample_data'
+DATA = 'original_data'
 
 # model
 MODEL_NAME = 'InceptionResNet'
@@ -13,8 +13,8 @@ WEIGHT_PATH = 'path/to/your/weights.h5'
 
 # hyperparameter
 EPOCHS = 100
-LEARNING_RATE = 0.9
-BATCH_SIZE = 512 # number of images in a single batch
+LEARNING_RATE = 0.001
+BATCH_SIZE = 256 # number of images in a single batch
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'

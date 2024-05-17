@@ -56,7 +56,7 @@ def create_callbacks(checkpoint_path, checkpoint_file_path, tensorboard_path):
     if not os.path.exists(tensorboard_path):
         os.makedirs(tensorboard_path)
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=0, mode='min')
+    early_stop = EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='min')
     check_point = ModelCheckpoint(checkpoint_file_path, verbose=1, monitor='val_loss', mode='min', save_best_only=True, save_weights_only=True)
     tbd_callback = TensorBoard(log_dir=tensorboard_path, histogram_freq=1)
     return [early_stop, check_point, tbd_callback]

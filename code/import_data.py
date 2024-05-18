@@ -15,21 +15,16 @@ class Import_data:
         self.image_size = image_size
         self.batch_size = batch_size
 
-    def build_generators(self, which_model, start_index=0):
+    def build_generators(self, which_model):
         # data 전처리
         data_generator = ImageDataGenerator(
             preprocessing_function=preprocess_input,
-            # rescale=1./255,
-            # featurewise_std_normalization=True,
-            # shear_range=0.2, 
-            # zoom_range=0.2,                        
-            # channel_shift_range=0.1,
-            # rotation_range=20,
-            # width_shift_range=0.2,
-            # height_shift_range=0.2,
-            # horizontal_flip=True,
-            # fill_mode='constant',
-            # cval=0
+            horizontal_flip=True,
+            vertical_flip=True,
+            rotation_range=40,
+            shear_range=0.2,
+            brightness_range=[0.8, 1.2],
+            fill_mode='reflect'
         )
         
         if which_model == 'train':

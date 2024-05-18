@@ -1,7 +1,7 @@
 import os
 
 # data
-DATA = 'original_data'
+DATA = 'cropped_data'
 
 # model
 MODEL_NAME = 'InceptionResNet'

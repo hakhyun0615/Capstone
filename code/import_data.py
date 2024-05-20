@@ -3,7 +3,7 @@ from train_config import *
 from PIL import ImageFile, Image
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
+from tensorflow.keras.applications.efficientnet import preprocess_input
 
 
 class Import_data:
@@ -19,12 +19,12 @@ class Import_data:
         # data 전처리
         data_generator = ImageDataGenerator(
             preprocessing_function=preprocess_input,
-            horizontal_flip=True,
-            vertical_flip=True,
-            rotation_range=40,
-            shear_range=0.2,
-            brightness_range=[0.8, 1.2],
-            fill_mode='reflect'
+            # horizontal_flip=True,
+            # vertical_flip=True,
+            # rotation_range=40,
+            # shear_range=0.2,
+            # brightness_range=[0.8, 1.2],
+            # fill_mode='reflect'
         )
         
         if which_model == 'train':

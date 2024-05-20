@@ -4,8 +4,8 @@ import os
 DATA = 'cropped_data'
 
 # model
-MODEL_NAME = 'InceptionResNet'
-IMAGE_SIZE = 299
+MODEL_NAME = 'EfficientNet'
+IMAGE_SIZE = 224
 '''
 if TripletNet, use weight path
 '''
@@ -13,7 +13,7 @@ WEIGHT_PATH = 'path/to/your/weights.h5'
 
 # hyperparameter
 EPOCHS = 100
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0003
 BATCH_SIZE = 256 # number of images in a single batch
 
 # root path

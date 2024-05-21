@@ -4,7 +4,7 @@ import os
 DATA = 'cropped_data'
 
 # model
-MODEL_NAME = 'TripletNet'
+MODEL_NAME = 'InceptionResNet'
 IMAGE_SIZE = 299
 '''
 if TripletNet, use weight path
@@ -13,7 +13,7 @@ WEIGHT_PATH = '../result/InceptionResNet_cropped_data_299_100_0.0003_256/finetun
 
 # hyperparameter
 EPOCHS = 100
-LEARNING_RATE = 0.0003
+LEARNING_RATE = 0.0001
 BATCH_SIZE = 256 # number of images in a single batch
 
 # root path
@@ -39,7 +39,7 @@ if MODEL_NAME == 'InceptionResNet':
     FINETUNE_CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'finetune_checkpoint')
     FINETUNE_CHECKPOINT_FILE_PATH = os.path.join(FINETUNE_CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}-{accuracy:03f}-{val_accuracy:03f}.weights.h5')
 elif MODEL_NAME == 'TripletNet':
-    CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'checkpoint')
+    CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'initial_checkpoint')
     CHECKPOINT_FILE_PATH = os.path.join(CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}.weights.h5')
     FINETUNE_CHECKPOINT_PATH = os.path.join(RESULT_FILE_PATH, 'finetune_checkpoint')
     FINETUNE_CHECKPOINT_FILE_PATH = os.path.join(FINETUNE_CHECKPOINT_PATH, 'checkpoint-{epoch:03d}-{loss:03f}-{val_loss:03f}.weights.h5')

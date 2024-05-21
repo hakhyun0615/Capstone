@@ -11,29 +11,40 @@ from train_config import *
 from import_data import Import_data
 
 def save_result(history):
-    accuracy = history.history['accuracy']
-    loss = history.history['loss']
-    precision = history.history['precision']
-    recall = history.history['recall']
+    if MODEL_NAME == 'InceptionResNet':
+        loss = history.history['loss']
+        accuracy = history.history['accuracy']
+        precision = history.history['precision']
+        recall = history.history['recall']
 
-    val_accuracy = history.history['val_accuracy']
-    val_loss = history.history['val_loss']
-    val_precision = history.history['val_precision']
-    val_recall = history.history['val_recall']
+        val_loss = history.history['val_loss']
+        val_accuracy = history.history['val_accuracy']
+        val_precision = history.history['val_precision']
+        val_recall = history.history['val_recall']
 
-    epochs = range(1,len(accuracy)+1)
-    epoch_list = list(epochs)
+        epochs = range(1,len(loss)+1)
+        epoch_list = list(epochs)
 
-    df = pd.DataFrame({'epoch': epoch_list, 'train_accuracy': accuracy, 'train_loss': loss, 'train_precision': precision, 'train_recall': recall, 'validation_accuracy': val_accuracy, 'validation_loss': val_loss, 'validation_precision': val_precision, 'validation_recall': val_recall},
-                            columns=['epoch', 'train_accuracy', 'train_loss', 'train_precision', 'train_recall', 'validation_accuracy', 'validation_loss', 'validation_precision', 'validation_recall'])
-    df.to_csv(os.path.join(RESULT_FILE_PATH, 'result.csv'), index=False, encoding='euc-kr')
+        df = pd.DataFrame({'epoch': epoch_list, 'train_accuracy': accuracy, 'train_loss': loss, 'train_precision': precision, 'train_recall': recall, 'validation_accuracy': val_accuracy, 'validation_loss': val_loss, 'validation_precision': val_precision, 'validation_recall': val_recall},
+                                columns=['epoch', 'train_accuracy', 'train_loss', 'train_precision', 'train_recall', 'validation_accuracy', 'validation_loss', 'validation_precision', 'validation_recall'])
+        df.to_csv(os.path.join(RESULT_FILE_PATH, 'result.csv'), index=False, encoding='euc-kr')
 
-    plt.plot(epochs, accuracy, 'b', label='Training accuracy')
-    plt.plot(epochs, val_accuracy, 'r', label='Validation accuracy')
-    plt.title('Training and validation accuracy')
-    plt.legend()
-    plt.savefig(os.path.join(RESULT_FILE_PATH, 'accuracy.png'))
-    plt.cla()
+        plt.plot(epochs, accuracy, 'b', label='Training accuracy')
+        plt.plot(epochs, val_accuracy, 'r', label='Validation accuracy')
+        plt.title('Training and validation accuracy')
+        plt.legend()
+        plt.savefig(os.path.join(RESULT_FILE_PATH, 'accuracy.png'))
+        plt.cla()
+
+    elif MODEL_NAME == 'TripletNet':
+        loss = history.history['loss']
+        val_loss = history.history['val_loss']
+
+        epochs = range(1,len(loss)+1)
+        epoch_list = list(epochs)
+
+        df = pd.DataFrame({'epoch': epoch_list, 'train_loss': loss, 'validation_loss': val_loss}, columns=['epoch', 'train_loss', 'validation_loss'])
+        df.to_csv(os.path.join(RESULT_FILE_PATH, 'result.csv'), index=False, encoding='euc-kr')
 
     plt.plot(epochs, loss, 'b', label='Training loss')
     plt.plot(epochs, val_loss, 'r', label='Validation loss')

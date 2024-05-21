@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D, BatchNormalization, Lambda
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model, load_model
 import tensorflow.keras.backend as K
 
 class TripletNet_model:
@@ -9,16 +9,17 @@ class TripletNet_model:
         self.weight_path = weight_path
 
     def create_base_model(self):
-        model = tf.keras.applications.InceptionResNetV2(
+        base_model = tf.keras.applications.InceptionResNetV2(
             input_shape=self.image_shape, 
             include_top=False, 
             weights=None
         )
-        model.load_weights(self.weight_path)
-        model.trainable = False
+        base_model.load_weights(self.weight_path, by_name=True, skip_mismatch=True)
+        print('Pretrained weights loaded')
+        base_model.trainable = False
         
         inputs = Input(shape=self.image_shape)
-        x = model(inputs, training=False)
+        x = base_model(inputs, training=False)
         x = GlobalAveragePooling2D()(x)
         x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)

@@ -9,17 +9,16 @@ class TripletNet_model:
         self.weight_path = weight_path
 
     def create_base_model(self):
-        base_model = tf.keras.applications.InceptionResNetV2(
+        model = tf.keras.applications.InceptionResNetV2(
             input_shape=self.image_shape, 
             include_top=False, 
             weights=None
         )
-        base_model.load_weights(self.weight_path, by_name=True, skip_mismatch=True)
-        print('Pretrained weights loaded')
-        base_model.trainable = False
+        model.load_weights(self.weight_path, by_name=True, skip_mismatch=True)
+        model.trainable = False
         
         inputs = Input(shape=self.image_shape)
-        x = base_model(inputs, training=False)
+        x = model(inputs, training=False)
         x = GlobalAveragePooling2D()(x)
         x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)

@@ -3,8 +3,7 @@ from train_config import *
 from PIL import ImageFile, Image
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications.efficientnet import preprocess_input
-
+from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
 
 class Import_data:
     def __init__(self, image_size, batch_size, train_data_path=None, val_data_path=None, test_data_path=None):
@@ -17,15 +16,7 @@ class Import_data:
 
     def build_generators(self, which_model):
         # data 전처리
-        data_generator = ImageDataGenerator(
-            preprocessing_function=preprocess_input,
-            # horizontal_flip=True,
-            # vertical_flip=True,
-            # rotation_range=40,
-            # shear_range=0.2,
-            # brightness_range=[0.8, 1.2],
-            # fill_mode='reflect'
-        )
+        data_generator = ImageDataGenerator(preprocessing_function=preprocess_input)
         
         if which_model == 'train':
             # make train_data into batches # len(train_generator): number of batches

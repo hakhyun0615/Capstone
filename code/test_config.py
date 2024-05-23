@@ -1,4 +1,5 @@
 from train_config import *
+
 # test data path
 TEST_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'test_data')
 

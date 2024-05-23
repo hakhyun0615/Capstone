@@ -6,7 +6,6 @@ from utils import *
 from train_config import *
 from pytz import timezone
 from datetime import datetime
-from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
 from import_data import Import_data, Import_triplet_data
@@ -23,10 +22,10 @@ if len(physical_devices) > 0:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class Train_model:
-    def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs, learning_rate, weight_path=None): 
+    def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_weight_path=None): 
         self.model_name = model_name   
         if self.model_name == 'TripletNet':
-            self.model = Load_model(model_name, image_size, weight_path)
+            self.model = Load_model(model_name, image_size, pretrained_weight_path)
             self.train_triplet_generator = Import_triplet_data(train_data_path, batch_size, image_size)
             self.val_triplet_generator = Import_triplet_data(val_data_path, batch_size, image_size)
         else:
@@ -84,7 +83,7 @@ if __name__ == '__main__':
                                   batch_size=BATCH_SIZE,
                                   epochs=EPOCHS,
                                   learning_rate=LEARNING_RATE,
-                                  weight_path=WEIGHT_PATH)
+                                  pretrained_weight_path=PRETRAINED_WEIGHT_PATH)
     else:
         train_model = Train_model(train_data_path=TRAIN_DATA_PATH,
                                   val_data_path=VAL_DATA_PATH,

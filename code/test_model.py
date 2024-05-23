@@ -11,11 +11,9 @@ from test_config import *
 from utils import *
 from load_model import Load_model
 from import_data import Import_data, Import_triplet_data
-from tensorflow.train import latest_checkpoint
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import confusion_matrix, classification_report
-import sys
 
 class Test_model:
     def __init__(self, test_data_path, model_name, image_size, batch_size, epochs, learning_rate, weight_path=None):
@@ -39,13 +37,12 @@ class Test_model:
                           optimizer=Adam(learning_rate=self.learning_rate),
                           metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
         
-        checkpoint = latest_checkpoint(os.path.expanduser(CHECKPOINT_FILE_PATH))
+        checkpoint = os.path.join(FINETUNE_CHECKPOINT_PATH, os.listdir(FINETUNE_CHECKPOINT_PATH)[-1])
         if checkpoint:
             print(f"Checkpoint found: {checkpoint}")
             model.load_weights(checkpoint)
         else:
             print("No checkpoint found")
-        model.load_weights(checkpoint)
 
         if self.model_name == 'TripletNet':
             # Create database from training data or known labeled data

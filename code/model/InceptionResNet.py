@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Input, Dense, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.models import Model
 from tensorflow.keras.initializers import GlorotUniform
 
@@ -18,6 +18,12 @@ class InceptionResNet_model:
         inputs = Input(shape=self.image_shape)
         x = model(inputs, training=False)
         x = GlobalAveragePooling2D()(x)
+
+        x = Dense(512, activation='relu', kernel_initializer=GlorotUniform())(x)
+        x = Dropout(0.5)(x)
+        x = Dense(256, activation='relu', kernel_initializer=GlorotUniform())(x)
+        x = Dropout(0.5)(x)
+
         outputs = Dense(7, activation='softmax', kernel_initializer=GlorotUniform())(x)
 
         return Model(inputs=inputs, outputs=outputs)

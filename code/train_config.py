@@ -8,8 +8,8 @@ MODEL_NAME = 'InceptionResNet' # InceptionResNet, TripletNet
 IMAGE_SIZE = 224
 
 # hyperparameter
-EPOCHS = 100
-LEARNING_RATE = 0.0003
+EPOCHS = 1000
+LEARNING_RATE = 0.001
 BATCH_SIZE = 256 # number of images in a single batch
 
 # root path
@@ -20,7 +20,7 @@ TRAIN_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'train_data')
 VAL_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'val_data')
 
 # result path
-RESULT_PATH = os.path.join(ROOT_PATH, 'result')
+RESULT_PATH = os.path.join(ROOT_PATH, 'train_result')
 EXPERIMENT_PATH = f"{MODEL_NAME}_{DATA}_{IMAGE_SIZE}_{EPOCHS}_{LEARNING_RATE}_{BATCH_SIZE}"
 RESULT_FILE_PATH = os.path.join(RESULT_PATH, EXPERIMENT_PATH)
 

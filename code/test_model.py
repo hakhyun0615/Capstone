@@ -52,12 +52,12 @@ class Test_model:
             self.evaluate_triplet_model(self.test_triplet_generator, database, model)
         else:
             eval = model.evaluate(self.test_generator) # [test_loss, test_accuracy, test_precision, test_recall]
-            with open(f"{TEST_RESULT_FILE_PATH}/evaluation.txt", "w") as file:
+            with open(f"{TEST_RESULT_FILE_PATH}/result.txt", "w") as file:
                 file.write(f"test_loss: {eval[0]}, test_accuracy: {eval[1]}, test_precision: {eval[2]}, test_recall: {eval[3]}\n")
             print(f'test_loss : {eval[0]}, test_accuracy : {eval[1]}, test_precision : {eval[2]}, test_recall : {eval[3]}')
 
-            y_pred = np.argmax(model.predict(self.test_generator), axis=-1) + 1 
-            y_true = self.test_generator.labels + 1
+            y_pred = np.argmax(model.predict(self.test_generator), axis=-1)
+            y_true = self.test_generator.labels
             np.save(f"{TEST_RESULT_FILE_PATH}/y_pred.npy", y_pred)
             np.save(f"{TEST_RESULT_FILE_PATH}/y_true.npy", y_true)
 

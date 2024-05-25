@@ -9,8 +9,8 @@ IMAGE_SIZE = 224
 
 # hyperparameter
 EPOCHS = 1000
-LEARNING_RATE = 0.001
-BATCH_SIZE = 256 # number of images in a single batch
+LEARNING_RATE = 0.1
+BATCH_SIZE = 512 # number of images in a single batch
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'

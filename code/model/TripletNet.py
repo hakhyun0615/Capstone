@@ -5,9 +5,9 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.initializers import GlorotUniform
 
 class TripletNet_model:
-    def __init__(self, image_size, pretrained_weight_path):
+    def __init__(self, image_size, pretrained_checkpoint_path):
         self.image_shape = (image_size,image_size,3)
-        self.pretrained_weight_path = pretrained_weight_path
+        self.pretrained_checkpoint_path = pretrained_checkpoint_path
 
     def create_base_model(self):
         model = tf.keras.applications.InceptionResNetV2(
@@ -15,12 +15,14 @@ class TripletNet_model:
             include_top=False, 
             weights=None
         )
-        model.load_weights(self.pretrained_weight_path, by_name=True, skip_mismatch=True)
+        model.load_weights(self.pretrained_checkpoint_path, by_name=True, skip_mismatch=True)
         model.trainable = False
         
         inputs = Input(shape=self.image_shape)
         x = model(inputs, training=False)
         x = GlobalAveragePooling2D()(x)
+        x = Dense(256, activation='relu', kernel_initializer=GlorotUniform())(x)
+        x = BatchNormalization()(x)
         x = Dense(128, activation='relu', kernel_initializer=GlorotUniform())(x)
         x = BatchNormalization()(x)
         outputs = Lambda(lambda x: K.l2_normalize(x, axis=1))(x)

@@ -8,7 +8,8 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
 from train_config import *
-from import_data import Import_data
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
 
 def save_result(history):
     if MODEL_NAME == 'InceptionResNet':
@@ -111,21 +112,32 @@ def triplet_loss(anchor, positive, negative, alpha=0.2):
     
     return tf.reduce_mean(loss)
 
-def create_embedding_database(self, train_generator, model):
+
+def create_embedding_database(train_generator, model):
     database = {}
+
     for batch, labels in train_generator:
-        embeddings = model.predict(batch)
-        for emb, label in zip(embeddings, labels):
-            label = np.argmax(label)  # Assuming labels are one-hot encoded
+        anchor, positive, negative = batch
+        embeddings = model.predict([anchor, positive, negative])
+
+        anchor_embeddings = embeddings[0]
+        positive_embeddings = embeddings[1]
+
+        all_embeddings = np.concatenate([anchor_embeddings, positive_embeddings], axis=0)
+        all_labels = np.concatenate([labels, labels], axis=0)
+
+        for emb, label in zip(all_embeddings, all_labels):
+            label = int(label)
             if label not in database:
                 database[label] = []
             database[label].append(emb)
-    # Average embeddings for each label
+
     for label in database:
         database[label] = np.mean(database[label], axis=0)
+
     return database
 
-def predict_label(self, embedding, database):
+def predict_closest_embedding(embedding, database):
     min_dist = float('inf')
     identity = None
 
@@ -137,15 +149,19 @@ def predict_label(self, embedding, database):
     
     return identity, min_dist
 
-def evaluate_triplet_model(self, test_generator, database, model):
+def evaluate_triplet_model(test_generator, database, model, output_path):
     y_true = []
     y_pred = []
 
     for batch, labels in test_generator:
-        embeddings = model.predict(batch)
-        for emb, label in zip(embeddings, labels):
-            true_label = np.argmax(label)  # Assuming labels are one-hot encoded
-            pred_label, _ = self.predict_label(emb, database)
+        anchor, positive, negative = batch
+        embeddings = model.predict([anchor, positive, negative])
+
+        anchor_embeddings = embeddings[0]
+
+        for emb, label in zip(anchor_embeddings, labels):
+            true_label = int(label)
+            pred_label, _ = predict_closest_embedding(emb, database)
             y_true.append(true_label)
             y_pred.append(pred_label)
     
@@ -153,5 +169,17 @@ def evaluate_triplet_model(self, test_generator, database, model):
     precision = Precision()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
     recall = Recall()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
 
-    print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}")
-    return accuracy, precision, recall
+    conf_mat = confusion_matrix(y_true, y_pred)
+    df_conf_mat = pd.DataFrame(conf_mat, columns=[str(i) for i in range(conf_mat.shape[0])],
+                               index=[str(i) for i in range(conf_mat.shape[1])])
+    sns_heatmap = sns.heatmap(data=df_conf_mat, annot=True, fmt='d', linewidths=.5, cmap='BuGn_r')
+    sns_heatmap.get_figure().savefig(f"{output_path}/confusion_matrix.png")
+
+    target_names = [str(i) for i in range(conf_mat.shape[0])]
+    report = classification_report(y_true, y_pred, digits=5, target_names=target_names)
+
+    with open(f"{output_path}/result.txt", "w") as file:
+        file.write(f"test_accuracy: {accuracy}, test_precision: {precision}, test_recall: {recall}\n")
+        file.write(report)
+    print(f"test_accuracy: {accuracy}, test_precision: {precision}, test_recall: {recall}")
+    print(report)

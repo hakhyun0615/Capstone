@@ -25,7 +25,7 @@ class Import_data:
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
                 class_mode='categorical', # one-hot encode labels
-                shuffle=True
+                shuffle=False # True when training, False when creating database
             )
             
             # make val_data into batches
@@ -34,6 +34,7 @@ class Import_data:
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
                 class_mode='categorical',
+                shuffle=False
             )
             
             return train_generator, val_generator
@@ -45,6 +46,7 @@ class Import_data:
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
                 class_mode='categorical',
+                shuffle=False
             )
 
             return test_generator

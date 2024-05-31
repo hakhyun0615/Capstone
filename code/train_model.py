@@ -22,13 +22,17 @@ if len(physical_devices) > 0:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class Train_model:
-    def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_weight_path=None): 
+    def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_checkpoint_path=None): 
         self.model_name = model_name   
         if self.model_name == 'TripletNet':
-            self.model = Load_model(model_name, image_size, pretrained_weight_path)
+            if pretrained_checkpoint_path:
+                print(f"Pretrained checkpoint found: {pretrained_checkpoint_path}")
+            else:
+                print("No pretrained checkpoint found")
+            self.model = Load_model(model_name, image_size, pretrained_checkpoint_path)
             self.train_triplet_generator = Import_triplet_data(train_data_path, batch_size, image_size)
             self.val_triplet_generator = Import_triplet_data(val_data_path, batch_size, image_size)
-        else:
+        elif self.model_name == 'InceptionResNet':
             self.model = Load_model(model_name, image_size)
             self.train_generator, self.val_generator = Import_data(image_size, batch_size, train_data_path=train_data_path, val_data_path=val_data_path).build_generators('train')
         self.epochs = epochs
@@ -51,7 +55,7 @@ class Train_model:
                 callbacks=callbacks,
                 verbose=0
             )
-        else:
+        elif self.model_name == 'InceptionResNet':
             fine_tune_callback = FineTune(self.learning_rate*0.1, self.train_generator, self.val_generator, self.epochs)
             
             model.compile(
@@ -83,8 +87,8 @@ if __name__ == '__main__':
                                   batch_size=BATCH_SIZE,
                                   epochs=EPOCHS,
                                   learning_rate=LEARNING_RATE,
-                                  pretrained_weight_path=PRETRAINED_WEIGHT_PATH)
-    else:
+                                  pretrained_checkpoint_path=PRETRAINED_CHECKPOINT_PATH)
+    elif MODEL_NAME == 'InceptionResNet':
         train_model = Train_model(train_data_path=TRAIN_DATA_PATH,
                                   val_data_path=VAL_DATA_PATH,
                                   model_name=MODEL_NAME,

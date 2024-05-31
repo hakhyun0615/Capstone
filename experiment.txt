@@ -11,7 +11,6 @@
         - callback: early stopping
 2. InceptionResNet
     - cropped_data
-    - image_augmentation
     1. transfer learning
         - weight: imagenet
         - train: top layers
@@ -23,4 +22,3 @@
         - callback: early stopping
 3. TripletNet
     - cropped_data
-    - image_augmentation

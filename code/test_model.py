@@ -16,12 +16,12 @@ from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import confusion_matrix, classification_report
 
 class Test_model:
-    def __init__(self, test_data_path, model_name, image_size, batch_size, epochs, learning_rate, weight_path=None):
+    def __init__(self, test_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_checkpoint_path=None):
         self.model_name = model_name
         if self.model_name == 'TripletNet':
-            self.model = Load_model(model_name, image_size, weight_path)
+            self.model = Load_model(model_name, image_size, pretrained_checkpoint_path)
             self.test_triplet_generator = Import_triplet_data(test_data_path, batch_size, image_size)
-        else:
+        elif self.model_name == 'InceptionResNet':
             self.model = Load_model(model_name, image_size)
             self.test_generator = Import_data(image_size, batch_size, test_data_path=test_data_path).build_generators('test')
         self.epochs = epochs
@@ -32,29 +32,24 @@ class Test_model:
         if self.model_name == 'TripletNet':
             model.add_loss(triplet_loss(model.outputs[0], model.outputs[1], model.outputs[2]))
             model.compile(optimizer=Adam(learning_rate=self.learning_rate))
-        else:
+            checkpoint_path = os.path.join(CHECKPOINT_PATH, os.listdir(CHECKPOINT_PATH)[-1])
+        elif self.model_name == 'InceptionResNet':
             model.compile(loss='categorical_crossentropy',
                           optimizer=Adam(learning_rate=self.learning_rate),
                           metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
-        
-        checkpoint = os.path.join(FINETUNE_CHECKPOINT_PATH, os.listdir(FINETUNE_CHECKPOINT_PATH)[-1])
-        if checkpoint:
-            print(f"Checkpoint found: {checkpoint}")
-            model.load_weights(checkpoint)
+            checkpoint_path = os.path.join(FINETUNE_CHECKPOINT_PATH, os.listdir(FINETUNE_CHECKPOINT_PATH)[-1])
+        if checkpoint_path:
+            print(f"Checkpoint found: {checkpoint_path}")
+            model.load_weights(checkpoint_path)
         else:
             print("No checkpoint found")
 
         if self.model_name == 'TripletNet':
-            # Create database from training data or known labeled data
-            train_triplet_gen = Import_triplet_data(TRAIN_DATA_PATH, BATCH_SIZE, IMAGE_SIZE)
-            database = self.create_embedding_database(train_triplet_gen, model)
-            # Evaluate the model on the test data
-            self.evaluate_triplet_model(self.test_triplet_generator, database, model)
-        else:
+            train_triplet_generator = Import_triplet_data(TRAIN_DATA_PATH, BATCH_SIZE, IMAGE_SIZE)
+            database = create_embedding_database(train_triplet_generator, model)
+            evaluate_triplet_model(self.test_triplet_generator, database, model, TEST_RESULT_FILE_PATH)
+        elif self.model_name == 'InceptionResNet':
             eval = model.evaluate(self.test_generator) # [test_loss, test_accuracy, test_precision, test_recall]
-            with open(f"{TEST_RESULT_FILE_PATH}/result.txt", "w") as file:
-                file.write(f"test_loss: {eval[0]}, test_accuracy: {eval[1]}, test_precision: {eval[2]}, test_recall: {eval[3]}\n")
-            print(f'test_loss : {eval[0]}, test_accuracy : {eval[1]}, test_precision : {eval[2]}, test_recall : {eval[3]}')
 
             y_pred = np.argmax(model.predict(self.test_generator), axis=-1)
             y_true = self.test_generator.labels
@@ -68,7 +63,15 @@ class Test_model:
             sns_heatmap.get_figure().savefig(f"{TEST_RESULT_FILE_PATH}/confusion_matrix.png")
 
             target_names = [str(i) for i in range(conf_mat.shape[0])]
-            print(classification_report(y_true, y_pred, digits=5, target_names=target_names))
+            report = classification_report(y_true, y_pred, digits=5, target_names=target_names)
+
+            with open(f"{TEST_RESULT_FILE_PATH}/result.txt", "w") as file:
+                file.write(f"test_loss: {eval[0]}, test_accuracy: {eval[1]}, test_precision: {eval[2]}, test_recall: {eval[3]}\n")
+                file.write(report)
+            print(f'test_loss: {eval[0]}, test_accuracy: {eval[1]}, test_precision: {eval[2]}, test_recall: {eval[3]}')
+            print(report)
+
+            
 
 start = datetime.now(timezone('Asia/Seoul'))
 print(f"Test start : {start}")
@@ -76,7 +79,7 @@ print(f"Test start : {start}")
 if __name__ == '__main__':
     if not os.path.exists(TEST_RESULT_FILE_PATH):
         os.makedirs(TEST_RESULT_FILE_PATH) 
-    test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE, EPOCHS, LEARNING_RATE)
+    test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE, EPOCHS, LEARNING_RATE, PRETRAINED_CHECKPOINT_PATH)
     test_model.test()
 
 end = datetime.now(timezone('Asia/Seoul'))

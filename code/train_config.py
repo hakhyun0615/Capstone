@@ -10,7 +10,7 @@ IMAGE_SIZE = 299
 # hyperparameter
 EPOCHS = 1000
 LEARNING_RATE = 0.001
-BATCH_SIZE = 16 # number of images in a single batch
+BATCH_SIZE = 128 # number of images in a single batch
 
 # root path
 ROOT_PATH = 'C:/Users/USER/Desktop/Git/capstone/Capstone'
@@ -21,7 +21,7 @@ VAL_DATA_PATH = os.path.join(ROOT_PATH, DATA, 'val_data')
 
 # result path
 RESULT_PATH = os.path.join(ROOT_PATH, 'train_result')
-EXPERIMENT_PATH = f"{MODEL_NAME}_{DATA}_{IMAGE_SIZE}_{EPOCHS}_{LEARNING_RATE}_{256}"
+EXPERIMENT_PATH = f"{MODEL_NAME}_{DATA}_{IMAGE_SIZE}_{EPOCHS}_{LEARNING_RATE}_{BATCH_SIZE}"
 RESULT_FILE_PATH = os.path.join(RESULT_PATH, EXPERIMENT_PATH)
 
 # tensorboard path

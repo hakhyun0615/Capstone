@@ -1,15 +1,13 @@
-import os
 import tensorflow as tf
-import sys
-import logging
 from utils import *
 from train_config import *
 from pytz import timezone
 from datetime import datetime
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
-from import_data import Import_data, Import_triplet_data
-from load_model import Load_model
+from import_data import Import_InceptionResNet_data, Import_TripletNet_data
+from model.InceptionResNet import InceptionResNet_model
+from model.TripletNet import TripletNet_model
 
 '''
 GPU 선택 / GPU 하나일 경우 아래 두 코드 주석 처리
@@ -25,25 +23,25 @@ class Train_model:
     def __init__(self, train_data_path, val_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_checkpoint_path=None): 
         self.model_name = model_name   
         if self.model_name == 'TripletNet':
-            if pretrained_checkpoint_path:
-                print(f"Pretrained checkpoint found: {pretrained_checkpoint_path}")
-            else:
-                print("No pretrained checkpoint found")
-            self.model = Load_model(model_name, image_size, pretrained_checkpoint_path)
-            self.train_triplet_generator = Import_triplet_data(train_data_path, batch_size, image_size)
-            self.val_triplet_generator = Import_triplet_data(val_data_path, batch_size, image_size)
+            self.train_triplet_generator = Import_TripletNet_data(train_data_path, batch_size, image_size)
+            self.val_triplet_generator = Import_TripletNet_data(val_data_path, batch_size, image_size)
         elif self.model_name == 'InceptionResNet':
-            self.model = Load_model(model_name, image_size)
-            self.train_generator, self.val_generator = Import_data(image_size, batch_size, train_data_path=train_data_path, val_data_path=val_data_path).build_generators('train')
+            self.train_generator, self.val_generator = Import_InceptionResNet_data(image_size, batch_size, train_data_path=train_data_path, val_data_path=val_data_path).build_generators('train')
         self.epochs = epochs
         self.learning_rate = learning_rate
-
+        self.pretrained_checkpoint_path = pretrained_checkpoint_path
+        self.image_size = image_size
 
     def train(self):
         callbacks = create_callbacks(CHECKPOINT_PATH, CHECKPOINT_FILE_PATH, TSBOARD_PATH)
         
-        model = self.model.build_model()
         if self.model_name == 'TripletNet':
+            if self.pretrained_checkpoint_path:
+                print(f"Pretrained checkpoint found: {self.pretrained_checkpoint_path}")
+            else:
+                print("No pretrained checkpoint found")
+            model = TripletNet_model(self.image_size, self.pretrained_checkpoint_path).configure_model()
+            model.summary()
             model.add_loss(triplet_loss(model.outputs[0], model.outputs[1], model.outputs[2]))
             model.compile(optimizer=Adam(learning_rate=self.learning_rate))
             history = model.fit(
@@ -58,6 +56,8 @@ class Train_model:
         elif self.model_name == 'InceptionResNet':
             fine_tune_callback = FineTune(self.learning_rate*0.1, self.train_generator, self.val_generator, self.epochs)
             
+            model = InceptionResNet_model(self.image_size).configure_model()
+            model.summary()
             model.compile(
                 loss='categorical_crossentropy',
                 optimizer=Adam(learning_rate=self.learning_rate),

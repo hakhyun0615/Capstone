@@ -4,12 +4,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras.backend as K
-from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, Callback
 from train_config import *
-from sklearn.metrics import confusion_matrix, classification_report
+from test_config import *
+from sklearn.metrics import confusion_matrix, classification_report, precision_score, recall_score, accuracy_score
 import seaborn as sns
+import pickle
+from collections import defaultdict
 
 def save_result(history):
     if MODEL_NAME == 'InceptionResNet':
@@ -112,28 +114,30 @@ def triplet_loss(anchor, positive, negative, alpha=0.2):
     
     return tf.reduce_mean(loss)
 
+def create_embedding_database(train_triplet_generator, model):
+    embedding_sum = defaultdict(lambda: np.zeros(128))
+    embedding_count = defaultdict(int)
+    total_batches = len(train_triplet_generator)
+    batch_count = 0
 
-def create_embedding_database(train_generator, model):
-    database = {}
+    print("Starting to process batches...")
+    for batch, labels in train_triplet_generator:
+        if batch_count >= total_batches:
+            break 
+        batch_count += 1 
+        print(f"Processing batch {batch_count}/{total_batches}") 
+        embeddings = model.predict(batch, verbose=0) # (batch, 128)
+        labels = labels.astype(int) # (batch, )
+        for emb, label in zip(embeddings, labels):
+            embedding_sum[label] += emb
+            embedding_count[label] += 1
 
-    for batch, labels in train_generator:
-        anchor, positive, negative = batch
-        embeddings = model.predict([anchor, positive, negative])
+    print("Starting to compute mean embeddings...")
+    database = {label: embedding_sum[label] / embedding_count[label] for label in embedding_sum}    
 
-        anchor_embeddings = embeddings[0]
-        positive_embeddings = embeddings[1]
-
-        all_embeddings = np.concatenate([anchor_embeddings, positive_embeddings], axis=0)
-        all_labels = np.concatenate([labels, labels], axis=0)
-
-        for emb, label in zip(all_embeddings, all_labels):
-            label = int(label)
-            if label not in database:
-                database[label] = []
-            database[label].append(emb)
-
-    for label in database:
-        database[label] = np.mean(database[label], axis=0)
+    print("Saving database...")
+    with open(f"{TEST_RESULT_FILE_PATH}/database.pkl", 'wb') as f:
+        pickle.dump(database, f)
 
     return database
 
@@ -149,37 +153,46 @@ def predict_closest_embedding(embedding, database):
     
     return identity, min_dist
 
-def evaluate_triplet_model(test_generator, database, model, output_path):
+
+def evaluate_triplet_model(test_triplet_generator, database, model, output_path):
     y_true = []
     y_pred = []
+    total_batches = len(test_triplet_generator)
+    batch_count = 0
 
-    for batch, labels in test_generator:
-        anchor, positive, negative = batch
-        embeddings = model.predict([anchor, positive, negative])
-
-        anchor_embeddings = embeddings[0]
-
-        for emb, label in zip(anchor_embeddings, labels):
-            true_label = int(label)
+    print("Starting to evaluate batches...")
+    for batch, labels in test_triplet_generator:
+        if batch_count >= total_batches:
+            break 
+        batch_count += 1 
+        print(f"Processing batch {batch_count}/{total_batches}") 
+        embeddings = model.predict(batch, verbose=0) # (batch, 128)
+        labels = labels.astype(int) # (batch, )
+        for emb, true_label in zip(embeddings, labels):
             pred_label, _ = predict_closest_embedding(emb, database)
             y_true.append(true_label)
             y_pred.append(pred_label)
     
-    accuracy = np.mean(np.array(y_true) == np.array(y_pred))
-    precision = Precision()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
-    recall = Recall()(tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)).numpy()
+    print("Saving results...")
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, average='macro')
+    recall = recall_score(y_true, y_pred, average='macro')
 
     conf_mat = confusion_matrix(y_true, y_pred)
     df_conf_mat = pd.DataFrame(conf_mat, columns=[str(i) for i in range(conf_mat.shape[0])],
-                               index=[str(i) for i in range(conf_mat.shape[1])])
+                            index=[str(i) for i in range(conf_mat.shape[1])])
     sns_heatmap = sns.heatmap(data=df_conf_mat, annot=True, fmt='d', linewidths=.5, cmap='BuGn_r')
-    sns_heatmap.get_figure().savefig(f"{output_path}/confusion_matrix.png")
+    sns_heatmap.get_figure().savefig(f"{TEST_DATA_PATH}/confusion_matrix.png")
 
     target_names = [str(i) for i in range(conf_mat.shape[0])]
     report = classification_report(y_true, y_pred, digits=5, target_names=target_names)
 
-    with open(f"{output_path}/result.txt", "w") as file:
+    with open(f"{TEST_RESULT_FILE_PATH}/result.txt", "w") as file:
         file.write(f"test_accuracy: {accuracy}, test_precision: {precision}, test_recall: {recall}\n")
         file.write(report)
+
     print(f"test_accuracy: {accuracy}, test_precision: {precision}, test_recall: {recall}")
     print(report)

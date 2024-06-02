@@ -9,45 +9,52 @@ from datetime import datetime
 from train_config import *
 from test_config import *
 from utils import *
-from load_model import Load_model
-from import_data import Import_data, Import_triplet_data
+from import_data import Import_InceptionResNet_data, Import_TripletNet_test_data
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import confusion_matrix, classification_report
+from model.InceptionResNet import InceptionResNet_model
+from model.TripletNet import TripletNet_model
+
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+if len(physical_devices) > 0:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 class Test_model:
-    def __init__(self, test_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_checkpoint_path=None):
+    def __init__(self, train_data_path, test_data_path, model_name, image_size, batch_size, epochs, learning_rate, pretrained_checkpoint_path):
         self.model_name = model_name
         if self.model_name == 'TripletNet':
-            self.model = Load_model(model_name, image_size, pretrained_checkpoint_path)
-            self.test_triplet_generator = Import_triplet_data(test_data_path, batch_size, image_size)
+            self.train_triplet_generator, self.test_triplet_generator = Import_TripletNet_test_data(image_size, batch_size, train_data_path=train_data_path, test_data_path=test_data_path).build_generators()
         elif self.model_name == 'InceptionResNet':
-            self.model = Load_model(model_name, image_size)
-            self.test_generator = Import_data(image_size, batch_size, test_data_path=test_data_path).build_generators('test')
+            self.test_generator = Import_InceptionResNet_data(image_size, batch_size, test_data_path=test_data_path).build_generators('test')
         self.epochs = epochs
         self.learning_rate = learning_rate
+        self.test_data_path = test_data_path
+        self.pretrained_checkpoint_path = pretrained_checkpoint_path
+        self.image_size = image_size
 
     def test(self):
-        model = self.model.build_model() 
         if self.model_name == 'TripletNet':
-            model.add_loss(triplet_loss(model.outputs[0], model.outputs[1], model.outputs[2]))
-            model.compile(optimizer=Adam(learning_rate=self.learning_rate))
+            model = TripletNet_model(self.image_size, self.pretrained_checkpoint_path).create_model()
+            model.summary()
+            model.compile()
             checkpoint_path = os.path.join(CHECKPOINT_PATH, os.listdir(CHECKPOINT_PATH)[-1])
         elif self.model_name == 'InceptionResNet':
+            model = InceptionResNet_model(self.image_size).configure_model()
+            model.summary()
             model.compile(loss='categorical_crossentropy',
                           optimizer=Adam(learning_rate=self.learning_rate),
                           metrics=['accuracy', Precision(name='precision'), Recall(name='recall')])
             checkpoint_path = os.path.join(FINETUNE_CHECKPOINT_PATH, os.listdir(FINETUNE_CHECKPOINT_PATH)[-1])
         if checkpoint_path:
             print(f"Checkpoint found: {checkpoint_path}")
-            model.load_weights(checkpoint_path)
+            model.load_weights(checkpoint_path, by_name=True)
         else:
             print("No checkpoint found")
 
         if self.model_name == 'TripletNet':
-            train_triplet_generator = Import_triplet_data(TRAIN_DATA_PATH, BATCH_SIZE, IMAGE_SIZE)
-            database = create_embedding_database(train_triplet_generator, model)
-            evaluate_triplet_model(self.test_triplet_generator, database, model, TEST_RESULT_FILE_PATH)
+            database = create_embedding_database(self.train_triplet_generator, model)
+            evaluate_triplet_model(self.test_triplet_generator, database, model, self.test_data_path)
         elif self.model_name == 'InceptionResNet':
             eval = model.evaluate(self.test_generator) # [test_loss, test_accuracy, test_precision, test_recall]
 
@@ -72,14 +79,13 @@ class Test_model:
             print(report)
 
             
-
 start = datetime.now(timezone('Asia/Seoul'))
 print(f"Test start : {start}")
 
 if __name__ == '__main__':
     if not os.path.exists(TEST_RESULT_FILE_PATH):
         os.makedirs(TEST_RESULT_FILE_PATH) 
-    test_model = Test_model(TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE, EPOCHS, LEARNING_RATE, PRETRAINED_CHECKPOINT_PATH)
+    test_model = Test_model(TRAIN_DATA_PATH, TEST_DATA_PATH, MODEL_NAME, IMAGE_SIZE, BATCH_SIZE, EPOCHS, LEARNING_RATE, PRETRAINED_CHECKPOINT_PATH)
     test_model.test()
 
 end = datetime.now(timezone('Asia/Seoul'))

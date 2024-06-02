@@ -5,7 +5,7 @@ from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
 
-class Import_data:
+class Import_InceptionResNet_data:
     def __init__(self, image_size, batch_size, train_data_path=None, val_data_path=None, test_data_path=None):
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         self.train_data_path = train_data_path
@@ -25,7 +25,7 @@ class Import_data:
                 target_size=(self.image_size, self.image_size),
                 batch_size=self.batch_size,
                 class_mode='categorical', # one-hot encode labels
-                shuffle=False # True when training, False when creating database
+                shuffle=True
             )
             
             # make val_data into batches
@@ -54,7 +54,36 @@ class Import_data:
         else:
             raise ValueError(f"Unsupported which_model: {which_model}")
         
-class Import_triplet_data(Sequence):
+class Import_TripletNet_test_data:
+    def __init__(self, image_size, batch_size, train_data_path=None, test_data_path=None):
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
+        self.train_data_path = train_data_path
+        self.test_data_path = test_data_path
+        self.image_size = image_size
+        self.batch_size = batch_size
+
+    def build_generators(self):
+        data_generator = ImageDataGenerator(preprocessing_function=preprocess_input)
+        
+        self.train_triplet_generator = data_generator.flow_from_directory(
+            self.train_data_path,
+            target_size=(self.image_size, self.image_size),
+            batch_size=self.batch_size,
+            class_mode='sparse',
+            shuffle=True
+        )
+        
+        self.test_triplet_generator = data_generator.flow_from_directory(
+            self.test_data_path,
+            target_size=(self.image_size, self.image_size),
+            batch_size=self.batch_size,
+            class_mode='sparse',
+            shuffle=False
+        )
+        
+        return self.train_triplet_generator, self.test_triplet_generator
+        
+class Import_TripletNet_train_data(Sequence):
     def __init__(self, data_dir, batch_size, image_size):
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         self.data_dir = data_dir
@@ -113,3 +142,4 @@ class Import_triplet_data(Sequence):
     
     def on_epoch_end(self):
         np.random.shuffle(self.indices)
+

@@ -1,11 +1,11 @@
 import numpy as np
-from train_config import *
+from config import *
 from PIL import ImageFile, Image
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
+from tensorflow.keras.applications.efficientnet import preprocess_input
 
-class Import_InceptionResNet_data:
+class Import_EfficientNetB7_data:
     def __init__(self, image_size, batch_size, train_data_path=None, val_data_path=None, test_data_path=None):
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         self.train_data_path = train_data_path

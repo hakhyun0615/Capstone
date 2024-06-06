@@ -20,6 +20,11 @@ class EfficientNetB7_model:
         x = GlobalAveragePooling2D()(x)
         x = Dropout(0.5)(x)
 
+        x = Dense(1024, kernel_initializer=GlorotUniform())(x)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Dropout(0.5)(x)
+
         x = Dense(512, kernel_initializer=GlorotUniform())(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)

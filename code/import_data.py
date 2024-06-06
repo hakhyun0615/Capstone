@@ -1,6 +1,8 @@
 import numpy as np
 from config import *
 from PIL import ImageFile, Image
+import tensorflow as tf
+from tensorflow.keras.utils import image_dataset_from_directory
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications.efficientnet import preprocess_input
@@ -53,7 +55,7 @@ class Import_EfficientNetB7_data:
 
         else:
             raise ValueError(f"Unsupported which_model: {which_model}")
-        
+
 class Import_TripletNet_test_data:
     def __init__(self, image_size, batch_size, train_data_path=None, test_data_path=None):
         ImageFile.LOAD_TRUNCATED_IMAGES = True

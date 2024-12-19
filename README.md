@@ -1,5 +1,5 @@
 # Capstone Design Project
-This repository contains the source code and documentation for the Capstone Design Project at Sungkyunkwan University.
+This repository contains the source code and documentation for the "Capstone Design Project" course at Sungkyunkwan University.
 
 ## Title
 Development of a Dog Skin Disease Diagnostic Application
